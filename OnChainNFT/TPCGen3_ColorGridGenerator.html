@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      #grid-container {
+        display: grid;
+        grid-template-rows: repeat(5, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        width: 400px;
+        height: 500px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="grid-container"></div>
+    <script>
+
+      function createColoredSquare(color1) {
+        const square = document.createElement("div");
+        square.style.background = `${color1}`; //,${color2}
+        return square;
+      }
+
+      const gridContainer = document.getElementById("grid-container");
+
+      const colors = ["red", "green" , "blue" , "yellow" ];
+      let color1 = "#fff";
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 4; col++) {
+
+            if (col == 0 && row == 0){
+                color1 = colors[0];
+            } 
+            if (col == 3 && row == 0){
+                color1 = colors[1];
+            } 
+            if (col == 0 && row == 4){
+                color1 = colors[2];
+            } 
+            if (col == 3 && row == 4){
+                color1 = colors[3];
+            } 
+            const color2 = "white";
+
+            // let finalColor = mixColors(color1, color2);
+
+          const square = createColoredSquare(color1);
+          gridContainer.appendChild(square);
+        }
+      }
+    </script>
+  </body>
+</html>

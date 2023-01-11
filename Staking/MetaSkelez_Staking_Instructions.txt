@@ -1,0 +1,31 @@
+Before the user can interact with the contract and stake their nfts, they first need to approve the contract.
+Your nft contract should have an approveAll function where the user can input the 1.staking contract address and 2. a bool ( true / false )
+
+Write Contract functions
+
+1. claim - input array of tokenIds to claim staking rewards ( ex. [25,34,82] )
+2. claimForAddress - input address and array of tokeIds they hold to claim the tokens for them ( ex. 0x00.. , [25,34,82] )
+3* pause - pauses the contract so no new tokens can be staked. 
+4* removeRewardTokens - removes an amount of reward tokens from the contract. ( ex. 25000000000000000000 .This removes 25 tokens )
+5* renounceOwnership - sets the owner of the contract to the 0 address and can no longer be changed or owned by anyone. Dont do this unless you know what you are doing.
+6* setMaxWithdrawPercentageOfContract - sets the maximum % a single nft can withdraw from the staking contract. 100% = 1000000 ( ex. 1000 sets the max withdraw to 0.1% of the total contract wallet )
+7* setReward - sets the daily reward per nft ( ex. 100 sets the reward to 100 tokens per day )
+8. stake - input an array of tokenIds to stake them. The user must first approve the contract to use their nfts before they can stake ( ex. [25,34,82] )
+9. transferOwnership - input an address you want to make the new owner of the contract ( ex. 0x00... )
+10* unpause - if the contract is paused, this will unpause it.
+11. unstake - input an array of tokenIds to unstake them. This will also send the accumulated rewards ( ex. [25,34,82] )
+* - Only Owner of the contract can run this function.
+
+Read Contract functions
+
+1. balanceOf - returns the number of nfts an address has staked.
+2. contractRewardBalance - shows the amount of reward tokens the contract holds.
+3. earningInfo - returns the rewards earned for the address and the tokenId input ( ex. 0x00... , [25,34,82] returns 102 tokens earned)
+4. maxWithdrawPercentageOfContract - shows current maximum withdraw percentage with denomonator of 1000000 ( ex. 1000 = 0.1%)
+5. onERC721Received - no idea lol
+6. owner - shows the current owner of the contract.
+7. paused - shows if the contract is paused or not.
+8. rewardRate - returns the current daily reward per nft.
+9. tokensOfOwner - returns all the tokenIds an address currently has staked.
+10. totalStaked - total number of nfts staked in the contract.
+11. vault - returns tokenId, time an nft was staked, and the owner of the token.

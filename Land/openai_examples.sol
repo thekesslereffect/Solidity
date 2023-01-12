@@ -109,34 +109,49 @@ contract Overworld {
 
 
 
-mapping(uint => mapping(uint => address)) public newOverworlds;
-mapping(uint => mapping(uint => address)) public newOverworldsOwners;
+pragma solidity ^0.8.0;
 
-address public owner;
+contract Overworld {
+    mapping(uint => mapping(uint => address)) public overworlds;
+    mapping(uint => mapping(uint => address)) public overworldsOwners;
 
-constructor() public {
-    owner = msg.sender;
-}
+    address public owner;
 
-function createNewOverworld() public {
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    function createNewOverworld() public {
         require(msg.sender == owner, "Only the owner of the contract can create new overworlds.");
-        uint newOverworldId = newOverworlds.length;
-        newOverworlds[newOverworldId] = mapping(uint => address)();
-        newOverworldsOwners[newOverworldId] = mapping(uint => address)();
+        uint newOverworldId = overworlds.length;
+        overworlds[newOverworldId] = mapping(uint => address)();
+        overworldsOwners[newOverworldId] = mapping(uint => address)();
         for (uint i = 0; i < 10; i++) {
             for (uint j = 0; j < 10; j++) {
-                newOverworlds[newOverworldId][i][j] = address(0);
-                newOverworldsOwners[newOverworldId][i][j] = address(0);
+                overworlds[newOverworldId][i][j] = address(0);
+                overworldsOwners[newOverworldId][i][j] = address(0);
             }
         }
     }
 
-    function setLandNewOverworld(uint overworldId, uint x, uint y, address landAddress, uint id, address owner) public {
-        require(x < 10 && y < 10);
-        require(newOverworlds[overworldId][x][y] == address(0));
-        newOverworlds[overworldId][x][y] = landAddress;
-        newOverworldsOwners[overworldId][x][y] = owner;
+    function setLand(uint overworldId, uint x, uint y, address landAddress, address owner) public {
+        require(overworlds[overworldId][x][y] == address(0));
+        overworlds[overworldId][x][y] = landAddress;
+        overworldsOwners[overworldId][x][y] = owner;
     }
+
+    function removeLand(uint overworldId, uint x, uint y) public {
+        require(overworlds[overworldId][x][y] != address(0));
+        overworlds[overworldId][x][y] = address(0);
+        overworldsOwners[overworldId][x][y] = address(0);
+    }
+
+    function getLandOwner(uint overworldId, uint x, uint y) public view returns (address owner) {
+        require(overworlds[overworldId][x][y] != address(0));
+        owner = overworldsOwners[overworldId][x][y];
+    }
+}
+
 
 This code creates a new mapping for the new overworld and assigns it an ID. The ID is determined by the length of the newOverworlds mapping which will be incremented every time a new overworld is created. Then, the code uses two nested loops to iterate through the 10x10 grid of the new overworld and initialize each cell with the default value of address(0), which represents an empty cell.
 

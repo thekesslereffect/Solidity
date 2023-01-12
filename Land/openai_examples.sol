@@ -105,6 +105,51 @@ contract Overworld {
     }
 }
 
+
+
+
+
+mapping(uint => mapping(uint => address)) public newOverworlds;
+mapping(uint => mapping(uint => address)) public newOverworldsOwners;
+
+address public owner;
+
+constructor() public {
+    owner = msg.sender;
+}
+
+function createNewOverworld() public {
+        require(msg.sender == owner, "Only the owner of the contract can create new overworlds.");
+        uint newOverworldId = newOverworlds.length;
+        newOverworlds[newOverworldId] = mapping(uint => address)();
+        newOverworldsOwners[newOverworldId] = mapping(uint => address)();
+        for (uint i = 0; i < 10; i++) {
+            for (uint j = 0; j < 10; j++) {
+                newOverworlds[newOverworldId][i][j] = address(0);
+                newOverworldsOwners[newOverworldId][i][j] = address(0);
+            }
+        }
+    }
+
+    function setLandNewOverworld(uint overworldId, uint x, uint y, address landAddress, uint id, address owner) public {
+        require(x < 10 && y < 10);
+        require(newOverworlds[overworldId][x][y] == address(0));
+        newOverworlds[overworldId][x][y] = landAddress;
+        newOverworldsOwners[overworldId][x][y] = owner;
+    }
+
+This code creates a new mapping for the new overworld and assigns it an ID. The ID is determined by the length of the newOverworlds mapping which will be incremented every time a new overworld is created. Then, the code uses two nested loops to iterate through the 10x10 grid of the new overworld and initialize each cell with the default value of address(0), which represents an empty cell.
+
+It's important to note that this is a basic example and you may want to add more complex logic and validation to ensure that only the right user can create new overworld and to prevent any bugs or unintended behavior. Also, you may want to add more functionality like trading, renting and etc.
+
+You could also add a new mapping to store the ownership of the new overworld, and a new function to set land on the new overworld similar to the original one.
+
+
+
+
+
+
+
 pragma solidity ^0.8.0;
 
 import "https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1155.md";

@@ -150,6 +150,20 @@ contract Overworld {
         require(overworlds[overworldId][x][y] != address(0));
         owner = overworldsOwners[overworldId][x][y];
     }
+
+    function getAllLandOwners() public view returns (address[] memory) {
+    address[] memory landOwners = new address[](0);
+    for (uint i = 0; i < overworldsOwners.length; i++) {
+        for (uint x = 0; x < 10; x++) {
+            for (uint y = 0; y < 10; y++) {
+                if (overworldsOwners[i][x][y] != address(0)) {
+                    landOwners.push(overworldsOwners[i][x][y]);
+                }
+            }
+        }
+    }
+    return landOwners;
+}
 }
 
 

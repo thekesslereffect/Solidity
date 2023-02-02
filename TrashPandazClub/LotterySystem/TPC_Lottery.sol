@@ -7,7 +7,7 @@
 // receipts have rarity. Higher rarity gives additional entries over common rarity.
 // call another contract for the receipts. this contract should be the only contract that can mint them based on lotto entries
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.7;
 
 contract TPC_Lottery {
     /* Attributes */

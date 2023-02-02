@@ -57,6 +57,15 @@ contract TPC_MegaMillies {
         return false;
     }
 
+    function checkNumberTooBig(uint[] memory _chars) internal view returns(bool){
+        for(uint i; i<_chars.length;i++){
+            if(_chars[i]>=chars){
+                return true;
+            }
+        }
+        return false;
+    }
+
     function randomChoice(uint num) private view returns(uint) {
         uint _randomIndex = uint(keccak256(abi.encodePacked((block.timestamp+num*nonceNum), nonceString, (num*nonceNum), msg.sender))) % chars;
         return _randomIndex;
@@ -93,8 +102,9 @@ contract TPC_MegaMillies {
     }
 
     function mintLottoTicket(uint[] memory _chars) public returns(uint[] memory){
-        require(_chars.length==ticketNumbers || _chars.length== 0, "Incorrect number of characters in string.");
+        require(_chars.length==ticketNumbers || _chars.length== 0, "Incorrect number of characters in array.");
         require(!checkDuplicatesArrayOnly(_chars), "You can not use the same number multiple times.");
+        require(!checkNumberTooBig(_chars),"One or more of your numbers are too big!");
         uint[] memory _charsSelected;
         if(_chars.length==ticketNumbers){
             _charsSelected = _chars;

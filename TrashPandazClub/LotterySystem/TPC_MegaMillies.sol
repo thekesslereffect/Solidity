@@ -153,6 +153,7 @@ contract TPC_MegaMillies {
         for(uint i; i<_wn.length; i++){
             gameInfo[currentGameID].winningNumbers.push(_wn[i]);
         }
+
         // get current balance of matic / trash and push to prizePool
         gameInfo[currentGameID].prizePool = 180; //address(this).balance?
         currentGameID++;
@@ -171,6 +172,7 @@ contract TPC_MegaMillies {
         gameInfo[_gameID].prizeClaimed += _prize;
     }
 
+
     // maths
     function fact(uint x) private view returns (uint y) {
         if (x == 0) {
@@ -185,7 +187,12 @@ contract TPC_MegaMillies {
         return fact(chars) / (fact(ticketNumbers) * fact(chars-ticketNumbers));
     }
 
+    // expected payout = prize pool / total number of winning combinations * ticket price
+    
+
+
     // info
+
     function getGameInfo(uint _gameID) public view returns(Game memory){
         return gameInfo[_gameID];
     }

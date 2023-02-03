@@ -10,6 +10,9 @@ pragma solidity ^0.8.7;
 
 contract TPC_MegaMillies {
 
+    address[] public admins;
+    mapping(address=>bool) public isAdmin;
+
     uint private chars = 50;
     string private nonceString = "this is a randomizer";
     uint private nonceNum = 12;
@@ -18,6 +21,31 @@ contract TPC_MegaMillies {
 
     // stats
     uint public currentGameID = 0;
+
+    modifier onlyAdmin {
+        require(isAdmin[msg.sender], "Sender is not an admin.");
+        _;
+    }
+
+    function addAdmin(address _admin) public {
+        require(!isAdmin[_admin], "Address is already an admin.");
+        isAdmin[_admin] = true;
+        admins.push(_admin);
+    }
+
+    function removeAdmin(address _admin) public {
+        require(isAdmin[_admin], "Address is not an admin.");
+        uint index = 0;
+        for (uint i = 0; i < admins.length; i++) {
+            if (admins[i] == _admin) {
+                index = i;
+                break;
+            }
+        }
+        isAdmin[_admin] = false;
+        delete admins[index];
+    }
+
 
     struct Winner{
         address winner;
@@ -34,7 +62,7 @@ contract TPC_MegaMillies {
     mapping(uint=>Game) gameInfo;
 
 
-    function checkDuplicates(uint _num, uint[] memory _arr) public pure returns (bool) {
+    function checkDuplicates(uint _num, uint[] memory _arr) private pure returns (bool) {
         for (uint i = 0; i < _arr.length; i++) {
             if (_arr[i] == _num) {
                 return true;
@@ -43,7 +71,7 @@ contract TPC_MegaMillies {
         return false;
     }
 
-    function checkDuplicatesArrayOnly(uint[] memory A) internal pure returns (bool) {
+    function checkDuplicatesArrayOnly(uint[] memory A) private pure returns (bool) {
         if (A.length == 0) {
         return false;
         }
@@ -57,7 +85,7 @@ contract TPC_MegaMillies {
         return false;
     }
 
-    function checkNumberTooBig(uint[] memory _chars) internal view returns(bool){
+    function checkNumberTooBig(uint[] memory _chars) private view returns(bool){
         for(uint i; i<_chars.length;i++){
             if(_chars[i]>=chars){
                 return true;
@@ -71,7 +99,7 @@ contract TPC_MegaMillies {
         return _randomIndex;
     }
 
-    function selectWinningNumbers() public view returns(uint[] memory){
+    function selectWinningNumbers() private view onlyAdmin returns(uint[] memory){
         uint[] memory _selection = new uint[](ticketNumbers);
         uint j = 0;
         uint _rand;
@@ -101,7 +129,11 @@ contract TPC_MegaMillies {
         return _selection;
     }
 
-    function mintLottoTicket(uint[] memory _chars) public returns(uint[] memory){
+    function mintLottoTicket() private {
+        // allow only this contract to mint tickets or admins
+    }
+
+    function playLotto(uint[] memory _chars) public returns(uint[] memory){
         require(_chars.length==ticketNumbers || _chars.length== 0, "Incorrect number of characters in array.");
         require(!checkDuplicatesArrayOnly(_chars), "You can not use the same number multiple times.");
         require(!checkNumberTooBig(_chars),"One or more of your numbers are too big!");
@@ -116,12 +148,11 @@ contract TPC_MegaMillies {
         return _charsSelected;
     }
 
-    function pickWinningNumbers() public {
+    function pickWinningNumbers() private {
         uint[] memory _wn = selectWinningNumbers();
         for(uint i; i<_wn.length; i++){
             gameInfo[currentGameID].winningNumbers.push(_wn[i]);
         }
-
         // get current balance of matic / trash and push to prizePool
         gameInfo[currentGameID].prizePool = 180; //address(this).balance?
         currentGameID++;
@@ -140,12 +171,21 @@ contract TPC_MegaMillies {
         gameInfo[_gameID].prizeClaimed += _prize;
     }
 
+    // maths
+    function fact(uint x) private view returns (uint y) {
+        if (x == 0) {
+        return 1;
+        }
+        else {
+        return x*fact(x-1);
+        }
+    }
 
-
-
+    function calculateOdds() public view returns (uint){
+        return fact(chars) / (fact(ticketNumbers) * fact(chars-ticketNumbers));
+    }
 
     // info
-
     function getGameInfo(uint _gameID) public view returns(Game memory){
         return gameInfo[_gameID];
     }

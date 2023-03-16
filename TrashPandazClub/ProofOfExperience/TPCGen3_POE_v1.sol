@@ -1,0 +1,1 @@
+// Each day they gain exp. trading removes % exp. Different exp traits increase at different rates based on gen3 minted.

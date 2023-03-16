@@ -1,11 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+// DEPLOY
+// gas               5936182
+// transaction cost  5161897
+// execution cost    4749189
+// MINT
+// gas              17469540
+// transaction cost 15190924
+// execution cost   15169860
+pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+// import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 library TPCGen3_ColorLib {
     function getColorsCommon() public pure returns(string[4][5] memory){
@@ -29,23 +39,13 @@ library TPCGen3_ColorLib {
         return colors;
 
     }
-    function getColorsEpic() public pure returns(string[4][5] memory){
+    function getColorsLegendary() public pure returns(string[4][5] memory){
         string[4][5] memory colors = [
             ['"#201000"','"#202000"','"#203000"','"#204000"'],
             ['"#211000"','"#212000"','"#213000"','"#214000"'],
             ['"#221000"','"#222000"','"#223000"','"#224000"'],
             ['"#231000"','"#232000"','"#233000"','"#234000"'],
             ['"#241000"','"#242000"','"#243000"','"#244000"']
-        ];
-        return colors;
-    }
-    function getColorsLegendary() public pure returns(string[4][5] memory){
-        string[4][5] memory colors = [
-            ['"#301000"','"#302000"','"#303000"','"#304000"'],
-            ['"#311000"','"#312000"','"#313000"','"#314000"'],
-            ['"#321000"','"#322000"','"#323000"','"#324000"'],
-            ['"#331000"','"#332000"','"#333000"','"#334000"'],
-            ['"#341000"','"#342000"','"#343000"','"#344000"']
         ];
         return colors;
     }
@@ -59,7 +59,7 @@ function generateCharacter(string memory _color1, string memory _color2, string 
         string memory result = "";
         {
             result = string(abi.encodePacked(
-                '<svg version="1.1" width="128" height="128" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">',
+                '<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com" shape-rendering="crispEdges">',
                 '<rect x="8" y="0" width="8" height="8" fill=',_color2,'/>',
                 '<rect x="16" y="0" width="16" height="8" fill=',_color4,'/>',
                 '<rect x="32" y="0" width="64" height="8" fill=',_color2,'/>',
@@ -198,7 +198,7 @@ function generateCharacter(string memory _color1, string memory _color2, string 
 
 library TPCGen3_Image2 {
 
-function generateCharacter(string memory _result, string memory _color1, string memory _color2, string memory _color3, string memory _color4, string memory _color5, string memory _levels, string memory _chromosome ) public pure returns(string memory){
+function generateCharacter(string memory _result, string memory _color1, string memory _color2, string memory _color3, string memory _color4, string memory _color5, string memory _chromosome ) public pure returns(string memory){
         if (keccak256(abi.encodePacked(_chromosome)) == keccak256(abi.encodePacked("XX")) ){
             _chromosome = _color1;
         }else{
@@ -273,11 +273,11 @@ function generateCharacter(string memory _result, string memory _color1, string 
                 result,
                 '<rect x="88" y="72" width="24" height="8" fill=',_color3,'/>',
                 '<rect x="112" y="72" width="8" height="8" fill=',_color5,'/>',
-                '<rect x="0" y="80" width="8" height="8" fill=',_color2,'/>',
+                // '<rect x="0" y="80" width="8" height="8" fill=',_color2,'/>',
               '<rect x="8" y="80" width="8" height="8" fill=',_color1,'/>',
                 '<rect x="16" y="80" width="96" height="8" fill=',_color5,'/>',
-                '<rect x="112" y="80" width="8" height="8" fill=',_color1,'/>',
-                '<rect x="120" y="80" width="8" height="8" fill=',_color2,'/>'
+                '<rect x="112" y="80" width="8" height="8" fill=',_color1,'/>'
+                // '<rect x="120" y="80" width="8" height="8" fill=',_color2,'/>'
                 
             ));
         }
@@ -328,25 +328,31 @@ function generateCharacter(string memory _result, string memory _color1, string 
             result = string(abi.encodePacked(
                 result,
                 '<rect x="104" y="104" width="16" height="8" fill=',_color1,'/>',
-                '<rect x="0" y="112" width="24" height="8" fill=',_color2,'/>',
+                // '<rect x="0" y="112" width="24" height="8" fill=',_color2,'/>',
+                '<rect x="0" y="112" width="24" height="8" fill="#0000006B"/>',
                 '<rect x="24" y="112" width="8" height="8" fill=',_color1,'/>',
                 '<rect x="32" y="112" width="24" height="8" fill=',_color3,'/>',
                 '<rect x="56" y="112" width="16" height="8" fill=',_color1,'/>',
                 '<rect x="72" y="112" width="24" height="8" fill=',_color3,'/>',
                 '<rect x="96" y="112" width="8" height="8" fill=',_color1,'/>',
-                '<rect x="104" y="112" width="24" height="8" fill=',_color2,'/>'
+                // '<rect x="104" y="112" width="24" height="8" fill=',_color2,'/>'
+                '<rect x="104" y="112" width="24" height="8" fill="#0000006B"/>'
+
             ));
         }
         {
             result = string(abi.encodePacked(
                 result,
-                '<rect x="8" y="120" width="24" height="8" fill=',_color2,'/>',
+                // '<rect x="8" y="120" width="24" height="8" fill=',_color2,'/>',
+                '<rect x="8" y="120" width="24" height="8" fill="#0000006B"/>',
                 '<rect x="32" y="120" width="24" height="8" fill=',_color1,'/>',
-                '<rect x="56" y="120" width="16" height="8" fill=',_color2,'/>',
+                // '<rect x="56" y="120" width="16" height="8" fill=',_color2,'/>',
+                '<rect x="56" y="120" width="16" height="8" fill="#0000006B"/>',
                 '<rect x="72" y="120" width="24" height="8" fill=',_color1,'/>',
-                '<rect x="96" y="120" width="24" height="8" fill=',_color2,'/>',
-                // '<style>.base { fill: white; font-family: serif; font-size: 24px; }</style>',
-                // '<text x="50%" y="50%" class="base" dominant-baseline="middle" text-anchor="middle">', 'Level:',_levels,'</text>',
+                // '<rect x="96" y="120" width="24" height="8" fill=',_color2,'/>',
+                '<rect x="96" y="120" width="24" height="8" fill="#0000006B"/>',
+                // '<style bx:fonts="Silkscreen">@import url(https://fonts.googleapis.com/css2?family=Silkscreen%3Aital%2Cwght%400%2C400%3B0%2C700&amp;display=swap);</style>',
+                // '<text x="50%" y="50%" fill="rgb(0,0,0)" font-size="20px" font-family="Silkscreen" dominant-baseline="middle" text-anchor="middle">', 'Level:',_levels,'</text>',
                 '</svg>'
             ));
         }
@@ -362,22 +368,21 @@ function generateCharacter(string memory _result, string memory _color1, string 
 }
 
 
-contract TPCGen3 is ERC1155URIStorage  {
-
+contract TPCGen3 is ERC1155URIStorage, AccessControl, Pausable  {
     using SafeMath for *;
     using Strings for uint256;
-    using Counters for Counters.Counter;
+    // using Counters for Counters.Counter;
     using TPCGen3_Image1 for *;
     using TPCGen3_Image2 for *;
     using TPCGen3_ColorLib for *;
-    Counters.Counter private _tokenIds;
+    // Counters.Counter private _tokenIds;
 
      // Contract name
     string public name = "TrashPandazClub Gen3";
     // Contract symbol
     string public symbol = "TPCGEN3";
 
-    mapping(uint256 => uint256) public tokenIdToLevel;
+    // mapping(uint256 => uint256) public tokenIdToLevel;
     mapping(uint256 => string) public tokenIdToChromosome;
     mapping(uint256 => string) public tokenIdToColor1; //dark
     mapping(uint256 => string) public tokenIdToColor2;
@@ -386,54 +391,31 @@ contract TPCGen3 is ERC1155URIStorage  {
     mapping(uint256 => string) public tokenIdToColor5; //light
     mapping(uint256 => string) public tokenIdToRarity;
 
+    mapping(string => string[4][5]) public rarityToColors;
 
-    // Rarity percentages
-    uint public commonPercent = 60;
-    uint public rarePercent = 28;
-    uint public epicPercent = 10;
-    uint public legendaryPercent = 2;
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    //track levels
-    //track hp
-    //track strength
-    //track speed
-
-
-    constructor() ERC1155("")  {}
-
-    function getRarity(uint256 tokenId) public view returns (string memory) {
-        string memory rarity = tokenIdToRarity[tokenId];
-        return rarity;
-    }
-    function getLevel(uint256 tokenId) public view returns (string memory) {
-        uint256 level = tokenIdToLevel[tokenId];
-        return level.toString();
-    }
-    function getChromosome(uint256 tokenId) public view returns (string memory) {
-        string memory chromosome = tokenIdToChromosome[tokenId];
-        return chromosome;
+    constructor() ERC1155("")  {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
+        rarityToColors["common"] = TPCGen3_ColorLib.getColorsCommon();
+        rarityToColors["rare"] = TPCGen3_ColorLib.getColorsRare();
+        rarityToColors["legendary"] = TPCGen3_ColorLib.getColorsLegendary();
     }
 
     function generateCharacter(uint _tokenId) public view returns (string memory){
-        string memory _color1 = tokenIdToColor1[_tokenId];
-        string memory _color2 = tokenIdToColor2[_tokenId];
-        string memory _color3 = tokenIdToColor3[_tokenId];
-        string memory _color4 = tokenIdToColor4[_tokenId];
-        string memory _color5 = tokenIdToColor5[_tokenId];
-        string memory _level = getLevel(_tokenId);
-        string memory _chromosome = getChromosome(_tokenId);
-        string memory _result = TPCGen3_Image1.generateCharacter(_color1,_color2,_color3,_color4,_color5);
-        string memory _finalImage = TPCGen3_Image2.generateCharacter(_result, _color1,_color2,_color3,_color4,_color5,_level,_chromosome);
+        string memory _result = TPCGen3_Image1.generateCharacter(tokenIdToColor1[_tokenId],tokenIdToColor2[_tokenId],tokenIdToColor3[_tokenId],tokenIdToColor4[_tokenId],tokenIdToColor5[_tokenId]);
+        string memory _finalImage = TPCGen3_Image2.generateCharacter(_result, tokenIdToColor1[_tokenId],tokenIdToColor2[_tokenId],tokenIdToColor3[_tokenId],tokenIdToColor4[_tokenId],tokenIdToColor5[_tokenId],tokenIdToChromosome[_tokenId]);
         return _finalImage;
     }
 
-    function getTokenURI(uint256 tokenId) public view returns (string memory){
+    function tokenURI(uint256 _tokenId) public view returns (string memory){
         bytes memory dataURI = abi.encodePacked(
             '{',
-                '"name": "TPCGen3 #', tokenId.toString(), '",',
+                '"name": "TPCGen3 #', _tokenId.toString(), '",',
                 '"description": "TrashPandazClub Gen3",',
-                '"image": "', generateCharacter(tokenId), '",',
-                '"attributes": [{"trait_type": "Rarity", "value": "',getRarity(tokenId),'"},{"trait_type": "Chromosome", "value": "',getChromosome(tokenId),'"},{"trait_type": "Color 1", "value": ',tokenIdToColor1[tokenId],'},{"trait_type": "Color 2", "value": ',tokenIdToColor2[tokenId],'},{"trait_type": "Color 3", "value": ',tokenIdToColor3[tokenId],'},{"trait_type": "Color 4", "value": ',tokenIdToColor4[tokenId],'},{"trait_type": "Color 5", "value": ',tokenIdToColor5[tokenId],'},{"trait_type": "Level", "display_type": "number", "value": "',getLevel(tokenId),'"}]',
+                '"image": "', generateCharacter(_tokenId), '",',
+                '"attributes": [{"trait_type": "Rarity", "value": "',tokenIdToRarity[_tokenId],'"},{"trait_type": "Chromosome", "value": "',tokenIdToChromosome[_tokenId],'"},{"trait_type": "Color 1", "value": ',tokenIdToColor1[_tokenId],'},{"trait_type": "Color 2", "value": ',tokenIdToColor2[_tokenId],'},{"trait_type": "Color 3", "value": ',tokenIdToColor3[_tokenId],'},{"trait_type": "Color 4", "value": ',tokenIdToColor4[_tokenId],'},{"trait_type": "Color 5", "value": ',tokenIdToColor5[_tokenId],'}]',
             '}'
         );
         return string(
@@ -444,85 +426,55 @@ contract TPCGen3 is ERC1155URIStorage  {
         );
     }
 
-    event RarityAttempt(string tokenRarity);
-
-    function mint() public {
-        _tokenIds.increment();
-        uint256 newItemId = _tokenIds.current();
-        
-        // give birth
-        tokenIdToLevel[newItemId] = 0;
-        tokenIdToChromosome[newItemId] = generateChromosome(msg.sender);
-        // generate rarity
-        tokenIdToRarity[newItemId] = generateRarity(msg.sender);
-        emit RarityAttempt(tokenIdToRarity[newItemId]);
-        // pick color groups based on rarity
-        generateColorByRarity(msg.sender, tokenIdToRarity[newItemId], newItemId);
-
-        _mint(msg.sender, newItemId, 1, "");
-        _setURI(newItemId, getTokenURI(newItemId));
+    function mint(address _sender, uint _tokenId, string memory _chromosome, string memory _rarity) public whenNotPaused onlyRole(MINTER_ROLE){
+        // _tokenIds.increment();
+        // uint256 newItemId = _tokenIds.current();
+        uint newItemId = _tokenId;
+        _mint(_sender, newItemId, 1, "");
+        tokenIdToChromosome[newItemId] = _chromosome;
+        tokenIdToRarity[newItemId] = _rarity;
+        uint _rand = uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, newItemId)));
+        generateColorByRarity(_rand, tokenIdToRarity[newItemId], newItemId);
+        _setURI(newItemId, tokenURI(newItemId));
     }
 
-    function generateChromosome(address _creator) private view returns(string memory){
-        uint randomNumber = uint(keccak256(abi.encodePacked(block.timestamp, _creator))) % 2;
-        // Return true if the random number is 1, false otherwise
-        if(randomNumber == 1) {
-            return "XX";
-        } else {
-            return "XY";
-        }
+    function generateColorByRarity(uint _rand, string memory _rarity, uint _tokenId) private {
+        string[4][5] memory colors = rarityToColors[_rarity];
+        //num-colors = 5 num-shades = 4
+        uint[5] memory indices = [_rand % 4, (_rand >> 32) % 4, (_rand >> 64) % 4, (_rand >> 96) % 4, (_rand >> 128) % 4];
+        tokenIdToColor1[_tokenId] = colors[0][indices[0]];
+        tokenIdToColor2[_tokenId] = colors[1][indices[1]];
+        tokenIdToColor3[_tokenId] = colors[2][indices[2]];
+        tokenIdToColor4[_tokenId] = colors[3][indices[3]];
+        tokenIdToColor5[_tokenId] = colors[4][indices[4]];
     }
 
-    function generateRarity(address _creator) private view returns(string memory){
-         uint roll = uint(keccak256(abi.encodePacked(block.timestamp, _creator))) % 100;
-        if (roll < commonPercent) {
-            return "common";
-        } else if (roll < commonPercent + rarePercent) {
-            return "rare";
-        } else if (roll < commonPercent + rarePercent + epicPercent) {
-            return "epic";
-        } else {
-            return "legendary";
-        }
+    function customColorForLegendary(uint _tokenId, string memory _color1, string memory _color2, string memory _color3, string memory _color4, string memory _color5) public {
+        require(balanceOf(msg.sender,_tokenId) == 1, "You aren't the owner!");
+        require(keccak256(abi.encodePacked(tokenIdToRarity[_tokenId])) == keccak256((abi.encodePacked("legendary"))), "Only Legendary TrashPandaz can be customized");
+        tokenIdToColor1[_tokenId] = string.concat('"',_color1,'"');
+        tokenIdToColor2[_tokenId] = string.concat('"',_color2,'"');
+        tokenIdToColor3[_tokenId] = string.concat('"',_color3,'"');
+        tokenIdToColor4[_tokenId] = string.concat('"',_color4,'"');
+        tokenIdToColor5[_tokenId] = string.concat('"',_color5,'"');
     }
 
-    function generateColorByRarity(address _creator, string memory _rarity, uint _tokenId) private{
-        string[4][5] memory colors;
-        if(keccak256(abi.encodePacked(_rarity)) == keccak256(abi.encodePacked("common"))){
-            colors = TPCGen3_ColorLib.getColorsCommon();
-        }
-        if (keccak256(abi.encodePacked(_rarity)) == keccak256(abi.encodePacked("rare"))){
-            colors = TPCGen3_ColorLib.getColorsRare();
-        }
-        if (keccak256(abi.encodePacked(_rarity)) == keccak256(abi.encodePacked("epic"))){
-            colors = TPCGen3_ColorLib.getColorsEpic();
-        }
-        if (keccak256(abi.encodePacked(_rarity)) == keccak256(abi.encodePacked("legendary"))){
-            colors = TPCGen3_ColorLib.getColorsLegendary();
-        }
-
-        // Convert the random number to an unsigned integer
-        uint randomIndex = uint(keccak256(abi.encodePacked(block.timestamp, _creator)));
-        uint randomIndex2 = uint(keccak256(abi.encodePacked(block.timestamp, _creator, block.timestamp)));
-        uint randomIndex3 = uint(keccak256(abi.encodePacked(block.timestamp, _creator, block.timestamp, _creator)));
-        uint randomIndex4 = uint(keccak256(abi.encodePacked(block.timestamp, _creator, block.timestamp, _creator, _creator)));
-        uint randomIndex5 = uint(keccak256(abi.encodePacked(block.timestamp, _creator, block.timestamp, block.timestamp, _creator, _creator)));
-        // Use the random index to select a color from the array
-        tokenIdToColor1[_tokenId] = colors[0][randomIndex % colors[0].length];
-        tokenIdToColor2[_tokenId] = colors[1][randomIndex2 % colors[0].length];
-        tokenIdToColor3[_tokenId] = colors[2][randomIndex3 % colors[0].length];
-        tokenIdToColor4[_tokenId] = colors[3][randomIndex4 % colors[0].length];
-        tokenIdToColor5[_tokenId] = colors[4][randomIndex5 % colors[0].length];
-        return ;
+    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+        internal
+        whenNotPaused
+        override(ERC1155)
+    {
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
     }
 
-    function train(uint256 tokenId) public {
-        require(balanceOf(msg.sender,tokenId) == 1, "You must own this NFT to train it!");
-        uint256 currentLevel = tokenIdToLevel[tokenId];
-        tokenIdToLevel[tokenId] = currentLevel + 1;
-        _setURI(tokenId, getTokenURI(tokenId));
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC1155, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
-
 }
 
     

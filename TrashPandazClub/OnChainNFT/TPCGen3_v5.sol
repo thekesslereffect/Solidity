@@ -8,40 +8,6 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-// library TPCGen3_ColorLib {
-//     function getColorsCommon() public pure returns(string[4][5] memory){
-//         string[4][5] memory colors = [
-//             ['"#232428"','"#302940"','"#422333"','"#76192d"'],
-//             ['"#335056"','"#404b67"','"#65474c"','"#ab2c2c"'],
-//             ['"#5a8a8f"','"#588195"','"#7b6561"','"#ed553b"'],
-//             ['"#9dbe9f"','"#9dbfbb"','"#bd9680"','"#f09a59"'],
-//             ['"#f7f0e9"','"#e5f5e7"','"#efead4"','"#f0ddb8"']
-//         ];
-//         return colors;
-//     }
-//     function getColorsRare() public pure returns(string[4][5] memory){
-//         string[4][5] memory colors = [
-//             ['"#101000"','"#102000"','"#103000"','"#104000"'],
-//             ['"#111000"','"#112000"','"#113000"','"#114000"'],
-//             ['"#121000"','"#122000"','"#123000"','"#124000"'],
-//             ['"#131000"','"#132000"','"#133000"','"#134000"'],
-//             ['"#141000"','"#142000"','"#143000"','"#144000"']
-//         ];
-//         return colors;
-
-//     }
-//     function getColorsLegendary() public pure returns(string[4][5] memory){
-//         string[4][5] memory colors = [
-//             ['"#201000"','"#202000"','"#203000"','"#204000"'],
-//             ['"#211000"','"#212000"','"#213000"','"#214000"'],
-//             ['"#221000"','"#222000"','"#223000"','"#224000"'],
-//             ['"#231000"','"#232000"','"#233000"','"#234000"'],
-//             ['"#241000"','"#242000"','"#243000"','"#244000"']
-//         ];
-//         return colors;
-//     }
-// }
-
 library TPCGen3_ColorLib {
     function getColorsCommon() public pure returns(string[4][5] memory){
         string[4][5] memory colors = [

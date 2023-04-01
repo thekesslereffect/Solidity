@@ -145,7 +145,7 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
 
         tokens[_tokenId].hatched = true;
         string memory elemental = Gen3_Attributes(gen3_AttributesContract).getElemental(tokens[_tokenId].seed);
-        tokens[_tokenId].color = Gen3_Attributes(gen3_AttributesContract).getColor(tokens[_tokenId].seed, elemental);
+        tokens[_tokenId].color = Gen3_Image(gen3_ImageContract).getColor(tokens[_tokenId].seed, elemental);
         tokens[_tokenId].image = Gen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].seed, elemental);
     }
 
@@ -159,7 +159,8 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         color[3] = string(abi.encodePacked('"',_color4,'"'));
         color[4] = string(abi.encodePacked('"',_color5,'"'));
         tokens[_tokenId].color = color;
-        tokens[_tokenId].image = Gen3_Image(gen3_ImageContract).getImageCustomColor(tokens[_tokenId].seed, color);
+        string memory chromosome = Gen3_Attributes(gen3_AttributesContract).getChromosome(tokens[_tokenId].seed)
+        tokens[_tokenId].image = Gen3_Image(gen3_ImageContract).getImageCustom(chromosome, color);
     }
 
     function mint(address _minter) public onlyRole(MINTER_ROLE){

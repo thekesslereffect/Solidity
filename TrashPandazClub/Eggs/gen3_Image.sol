@@ -10,6 +10,33 @@ contract gen3_Image{
         _result = TPCGen3_Image2.generateCharacter(_result, _color[0],_color[1],_color[2],_color[3],_color[4],_chromosome);
         return _result;
     }
+    function getImageCustom(string memory _chromosome, string[5] memory _color) public pure returns(string memory) {
+        string memory _result = TPCGen3_Image1.generateCharacter(_color[0],_color[1],_color[2],_color[3],_color[4]);
+        _result = TPCGen3_Image2.generateCharacter(_result, _color[0],_color[1],_color[2],_color[3],_color[4],_chromosome);
+        return _result;
+    }
+
+    function getColor(uint _seed, string memory _elemental) public returns(string[5] memory){
+        // get the elemental and get colors based on it
+        string[4][5] memory colors = elementalToColors(_seed);
+        string[5] memory color;
+        //num-colors = 5 num-shades = 4
+        uint[5] memory indices = [_seed % 4, (_seed >> 32) % 4, (_seed >> 64) % 4, (_seed >> 96) % 4, (_seed >> 128) % 4];
+        color[0] = colors[0][indices[0]];
+        color[1] = colors[1][indices[1]];
+        color[2] = colors[2][indices[2]];
+        color[3] = colors[3][indices[3]];
+        color[4] = colors[4][indices[4]];
+        return color;
+    }
+
+    function elementalToColors(uint _seed) public returns(string[5] memory){
+        string memory elemental = getElemental(_seed);
+        if(keccak256(abi.encodePacked(elemental)) == keccak256(abi.encodePacked(elementals[0][0]))){
+            // water
+            return ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'];
+        }
+    }
 
 }
 

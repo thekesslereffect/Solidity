@@ -185,10 +185,9 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         tokens[_tokenId].image = image;
     }
 
-    function mutate(uint _tokenId, string[5] memory _colors) public onlyRole(MUTATE_ROLE){
+    function mutate(uint _tokenId) public onlyRole(MUTATE_ROLE){
         require(tokens[_tokenId].mutated==false,"This NFT has already has mutated DNA.");
         require(balanceOf(msg.sender,_tokenId) == 1, "You aren't the owner!");
-        tokens[_tokenId].color = _colors;
         tokens[_tokenId].mutated=true;
         if(tokens[_tokenId].hatched == true){
             tokens[_tokenId].image = IGen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].color, tokens[_tokenId].chromosome, tokens[_tokenId].mutated );

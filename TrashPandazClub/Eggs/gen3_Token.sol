@@ -1,26 +1,3 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.18;
-
-// import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
-// import "@openzeppelin/contracts/utils/Counters.sol";
-// import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-// import "@openzeppelin/contracts/utils/Base64.sol";
-// import "@openzeppelin/contracts/utils/Strings.sol";
-// import "@openzeppelin/contracts/access/AccessControl.sol";
-
-// contract gen3_Token is ERC1155{
-//     // This is hard data. Only include things you dont want to change in the future
-//     // mint token id to owner
-//     // token id => seedom seed
-//     // token id => birthday
-//     // token id => owner
-//     // token id => hatched
-//     // token id => rare/legendary
-//     // token id => colors[]
-//     // create metadata from other contacts
-// }
-
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
@@ -34,11 +11,15 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 
 contract Gen3_Image{
-    function getImage(uint _seed) public returns(string memory) {}
+    function getImage(uint _seed, string[5] memory _color, string memory _chromosome) public returns(string memory) {}
+    function getImageCustom(string memory _chromosome, string[5] memory _color) public pure returns(string memory) {}
 }
 
 contract Gen3_Attributes{
-    function getAttributes(uint _seed) public returns(string memory){}
+    function getAttributes(uint _seed, string[5] memory _color) public view returns(string memory){}
+    function getColor(uint _seed) public view returns(string[5] memory){}
+    function getChromosome(uint _seed) public pure returns(string memory){}
+    function getElemental(uint _seed) public view returns(string memory){}
 }
 
 
@@ -55,13 +36,16 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
     string[] private imageColors = ["brown.svg","red.svg","green.svg","pink.svg","orange.svg","black.svg","yellow.svg","blue.svg","purple.svg"];
 
     address gen3_ImageContract;
-    address gen3_AttributeContract;
+    address gen3_AttributesContract;
 
     struct Token{
         string image;
         uint birthday;
         bool hatched;
         uint seed;
+        string[5] color;
+        string chromosome;
+        string elemental;
     }
     mapping(uint256 => Token) public tokens;
 
@@ -77,7 +61,7 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         _grantRole(MINTER_ROLE, msg.sender);
         _grantRole(MUTATION_ROLE, msg.sender);
         hatchingPaused = true;
-        incubationTime = 2 days;
+        incubationTime = 5 days;
         gen3_ImageContract = _gen3_ImageContract;
         gen3_AttributesContract = _gen3_AttributesContract;
     }
@@ -85,7 +69,7 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
     function tokenURI(uint256 tokenId) public view returns (string memory){
         bytes memory dataURI = abi.encodePacked(
             _tokenURIPrefix(tokenId),
-            _tokenURIPayload(tokenId),
+            _tokenURIPayload(tokenId)
         );
         return string(
             abi.encodePacked(
@@ -95,35 +79,42 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         );
     }
 
-    function _tokenURIPrefix(uint256 tokenId) private view returns (string memory) {
+    function _tokenURIPrefix(uint256 _tokenId) private view returns (string memory) {
         return string(
                 abi.encodePacked(
-                    '{ "name": "TPCGen3 #',tokenId.toString(),
+                    '{ "name": "TPCGen3 #',_tokenId.toString(),
                     '", "description": "',
                     description,
                     '", "image": "',
-                    tokens[tokenId].image
-                    ),'",' 
-                );
+                    tokens[_tokenId].image,
+                    '",' 
+                ));
     }
 
-    function _tokenURIPayload(uint256 tokenId) private view returns (string memory) {
-        if (tokens[tokenId].hatched == false) {
+    function _tokenURIPayload(uint256 _tokenId) private view returns (string memory) {
+        if (tokens[_tokenId].hatched == false) {
+            string memory _rarity = (tokens[_tokenId].seed % 100) < 50 ? "common" : (tokens[_tokenId].seed % 100) < 75 ? "rare" : "legendary";
             return string(
                 abi.encodePacked(
                     '"attributes": [{"trait_type": "Incubation","max_value": 100, "value": ',
-                    getIncubationProgress(tokenId).toString(),
-                    '}]',
-                    '}'
+                    getIncubationProgress(_tokenId).toString(),
+                    '},{"trait_type": "Rarity", "value": "',
+                    _rarity,
+                    '"}',
+                    ']}'
                 )
             );
         } else {
             return string(
                 abi.encodePacked(
-                    Gen3_Attributes(gen3_AttributeContract).getAttributes(tokens[tokenId].seed),
-                    '}'
+                    /// !!!!!!!!! Maybe bring back the attributes here and just add an additional attributres contract for extras.
+                    Gen3_Attributes(gen3_AttributesContract).getAttributes(tokens[_tokenId].seed, tokens[_tokenId].color),
+                    ']}'
+                )
             );
         }
+            
+        
     }
 
     function getIncubationProgress(uint _tokenId) public view returns(uint) {
@@ -144,14 +135,15 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         require(tokens[_tokenId].hatched==false, "That one is hatched already...");
 
         tokens[_tokenId].hatched = true;
-        string memory elemental = Gen3_Attributes(gen3_AttributesContract).getElemental(tokens[_tokenId].seed);
-        tokens[_tokenId].color = Gen3_Image(gen3_ImageContract).getColor(tokens[_tokenId].seed, elemental);
-        tokens[_tokenId].image = Gen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].seed, elemental);
+        tokens[_tokenId].color = Gen3_Attributes(gen3_AttributesContract).getColor(tokens[_tokenId].seed);
+        tokens[_tokenId].chromosome = Gen3_Attributes(gen3_AttributesContract).getChromosome(tokens[_tokenId].seed);
+        tokens[_tokenId].image = Gen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].seed, tokens[_tokenId].color, tokens[_tokenId].chromosome );
     }
 
     function customColorForUnknown(uint _tokenId, string memory _color1, string memory _color2, string memory _color3, string memory _color4, string memory _color5) public {
         require(balanceOf(msg.sender,_tokenId) == 1, "You aren't the owner!");
-        require(keccak256(abi.encodePacked(tokens[_tokenId].elemental)) == keccak256((abi.encodePacked("unknown"))), "Only Unknown TrashPandaz can be customized");
+        string memory _elemental = Gen3_Attributes(gen3_AttributesContract).getElemental(tokens[_tokenId].seed);
+        require(keccak256(abi.encodePacked(_elemental)) == keccak256((abi.encodePacked("unknown"))), "Only Unknown TrashPandaz can be customized");
         string[5] memory color;
         color[0] = string(abi.encodePacked('"',_color1,'"'));
         color[1] = string(abi.encodePacked('"',_color2,'"'));
@@ -159,7 +151,7 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         color[3] = string(abi.encodePacked('"',_color4,'"'));
         color[4] = string(abi.encodePacked('"',_color5,'"'));
         tokens[_tokenId].color = color;
-        string memory chromosome = Gen3_Attributes(gen3_AttributesContract).getChromosome(tokens[_tokenId].seed)
+        string memory chromosome = Gen3_Attributes(gen3_AttributesContract).getChromosome(tokens[_tokenId].seed);
         tokens[_tokenId].image = Gen3_Image(gen3_ImageContract).getImageCustom(chromosome, color);
     }
 
@@ -176,40 +168,42 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
             birthday: block.timestamp,
             hatched: false,
             color: ["???","???","???","???","???"],
-            seed: uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _newItemId))),
+            chromosome: "",
+            elemental: "",
+            seed: uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _newItemId)))
         });
         tokens[_newItemId] = newToken;
         // create egg image
-        _style = (tokens[_newItemId].seed % 100) < 50 ? "common" : (tokens[_newItemId].seed % 100) < 75 ? "rare" : "legendary";
+        string memory _rarity = (tokens[_newItemId].seed % 100) < 50 ? "common" : (tokens[_newItemId].seed % 100) < 75 ? "rare" : "legendary";
         string memory _color = imageColors[tokens[_newItemId].seed % imageColors.length];
-        tokens[_newItemId].image = string(abi.encodePacked("ipfs://",imageURI,"/",_style,"_",_color));
+        tokens[_newItemId].image = string(abi.encodePacked("ipfs://",imageURI,"/",_rarity,"_",_color));
     }
 
-    // function mintCollab(address _minter, string memory _projectName, string[5] memory _colors) public onlyRole(DEFAULT_ADMIN_ROLE){
-    //     _tokenIds.increment();
-    //     uint256 _newItemId = _tokenIds.current();
-    //     mintStatsCollab(_newItemId,_projectName,_colors);
-    //     _mint(_minter, _newItemId, 1, ""); 
-    // }
+    function mintCollab(address _minter, string memory _projectName, string[5] memory _colors) public onlyRole(DEFAULT_ADMIN_ROLE){
+        _tokenIds.increment();
+        uint256 _newItemId = _tokenIds.current();
+        mintStatsCollab(_newItemId,_projectName,_colors);
+        _mint(_minter, _newItemId, 1, ""); 
+    }
 
-    // function mintStatsCollab(uint _newItemId, string memory _projectName, string[5] memory _colors) private {
-    //     string[5] memory _colorsArray;
-    //     _colorsArray[0] = string(abi.encodePacked('"',_colors[0],'"'));
-    //     _colorsArray[1] = string(abi.encodePacked('"',_colors[1],'"'));
-    //     _colorsArray[2] = string(abi.encodePacked('"',_colors[2],'"'));
-    //     _colorsArray[3] = string(abi.encodePacked('"',_colors[3],'"'));
-    //     _colorsArray[4] = string(abi.encodePacked('"',_colors[4],'"'));
-    //     Token memory newToken = Token({
-    //         image: string(abi.encodePacked("ipfs://",imageURI,"/","collab_collab.svg")),
-    //         elemental: "collab",
-    //         chromosome: _projectName,
-    //         birthday: block.timestamp,
-    //         hatched: false,
-    //         color: _colorsArray,
-    //         seed: uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _newItemId))),
-    //     });
-    //     tokens[_newItemId] = newToken;
-    // }
+    function mintStatsCollab(uint _newItemId, string memory _projectName, string[5] memory _colors) private {
+        string[5] memory _colorsArray;
+        _colorsArray[0] = string(abi.encodePacked('"',_colors[0],'"'));
+        _colorsArray[1] = string(abi.encodePacked('"',_colors[1],'"'));
+        _colorsArray[2] = string(abi.encodePacked('"',_colors[2],'"'));
+        _colorsArray[3] = string(abi.encodePacked('"',_colors[3],'"'));
+        _colorsArray[4] = string(abi.encodePacked('"',_colors[4],'"'));
+        Token memory newToken = Token({
+            image: string(abi.encodePacked("ipfs://",imageURI,"/","collab_collab.svg")),
+            elemental: "collab",
+            chromosome: _projectName,
+            birthday: block.timestamp,
+            hatched: false,
+            color: _colorsArray,
+            seed: uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _newItemId)))
+        });
+        tokens[_newItemId] = newToken;
+    }
 
     function setHatchingPaused(bool _bool) public onlyRole(DEFAULT_ADMIN_ROLE){
         hatchingPaused = _bool;

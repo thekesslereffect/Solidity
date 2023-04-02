@@ -285,6 +285,18 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         return _images;
     }
 
+    function getTokenColors(uint[] memory _tokenId) public view returns(string[][] memory){
+        string[][] memory _colors = new string[][](_tokenId.length);
+        for(uint i=0; i<_tokenId.length;i++){
+            string[5] memory tokenColors = tokens[_tokenId[i]].color;
+            _colors[i] = new string[](tokenColors.length);
+            for (uint j = 0; j < tokenColors.length; j++) {
+                _colors[i][j] = tokenColors[j];
+            }
+        }
+        return _colors;
+    }
+
     function setIGen3_ImageContract(address _gen3_ImageContract) public onlyRole(DEFAULT_ADMIN_ROLE){
         gen3_ImageContract = _gen3_ImageContract;
     }

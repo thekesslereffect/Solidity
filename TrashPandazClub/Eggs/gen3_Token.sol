@@ -10,16 +10,15 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 
 
-contract Gen3_Image{
-    function getImage(uint _seed, string[5] memory _color, string memory _chromosome) public returns(string memory) {}
-    function getImageCustom(string memory _chromosome, string[5] memory _color) public pure returns(string memory) {}
+interface IGen3_Image{
+    function getImage(string[5] memory _color, string memory _chromosome, bool _mutated) external view returns(string memory);
 }
 
-contract Gen3_Attributes{
-    function getAttributes(uint _seed, string[5] memory _color) public view returns(string memory){}
-    function getColor(uint _seed) public view returns(string[5] memory){}
-    function getChromosome(uint _seed) public pure returns(string memory){}
-    function getElemental(uint _seed) public view returns(string memory){}
+interface IGen3_Attributes{
+    function getExtraAttributes(uint _seed) external view returns(string memory);
+    function getColor(uint _seed) external view returns(string[5] memory);
+    function getChromosome(uint _seed) external view returns(string memory);
+    function getElemental(uint _seed) external view returns(string memory);
 }
 
 
@@ -46,6 +45,7 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         string[5] color;
         string chromosome;
         string elemental;
+        bool mutated;
     }
     mapping(uint256 => Token) public tokens;
 
@@ -54,12 +54,12 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
     uint public incubationTime;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant MUTATION_ROLE = keccak256("MUTATION_ROLE");
+    bytes32 public constant MUTATE_ROLE = keccak256("MUTATE_ROLE");
 
     constructor(address _gen3_ImageContract, address _gen3_AttributesContract) ERC1155("")  {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
-        _grantRole(MUTATION_ROLE, msg.sender);
+        _grantRole(MUTATE_ROLE, msg.sender);
         hatchingPaused = true;
         incubationTime = 5 days;
         gen3_ImageContract = _gen3_ImageContract;
@@ -105,13 +105,36 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
                 )
             );
         } else {
-            return string(
+            string[5] memory _color = tokens[_tokenId].color;
+            string memory result;
+            string memory extraAttributes = IGen3_Attributes(gen3_AttributesContract).getExtraAttributes(tokens[_tokenId].seed);
+            string memory mutation = tokens[_tokenId].mutated == true?'{"trait_type": "Mutated", "value": "Mutated"},' : "";
+            result = string(
                 abi.encodePacked(
-                    /// !!!!!!!!! Maybe bring back the attributes here and just add an additional attributres contract for extras.
-                    Gen3_Attributes(gen3_AttributesContract).getAttributes(tokens[_tokenId].seed, tokens[_tokenId].color),
-                    ']}'
-                )
-            );
+                    '"attributes": [',
+                    '{"trait_type": "Elemental", "value": "',
+                    tokens[_tokenId].elemental,
+                    '"},{"trait_type": "Chromosome", "value": "',
+                    tokens[_tokenId].chromosome,
+                    '"},',
+                    mutation,                    
+                    '{"trait_type": "Color 1", "value": "',
+                    _color[0],
+                    '"},{"trait_type": "Color 2", "value": "',
+                    _color[1]));
+            result = string(abi.encodePacked(
+                result,
+                '"},{"trait_type": "Color 3", "value": "',
+                _color[2],
+                '"},{"trait_type": "Color 4", "value": "',
+                _color[3],
+                '"},{"trait_type": "Color 5", "value": "',
+                _color[4],
+                '"}',
+                extraAttributes,
+                ']}'
+            ));
+            return result;
         }
             
         
@@ -133,29 +156,46 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         }
         require(balanceOf(msg.sender,_tokenId) == 1, "You aren't the owner!");
         require(tokens[_tokenId].hatched==false, "That one is hatched already...");
-
         tokens[_tokenId].hatched = true;
-        tokens[_tokenId].color = Gen3_Attributes(gen3_AttributesContract).getColor(tokens[_tokenId].seed);
-        tokens[_tokenId].chromosome = Gen3_Attributes(gen3_AttributesContract).getChromosome(tokens[_tokenId].seed);
-        tokens[_tokenId].image = Gen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].seed, tokens[_tokenId].color, tokens[_tokenId].chromosome );
+        if(keccak256(abi.encodePacked(tokens[_tokenId].elemental)) == keccak256(abi.encodePacked("collab"))){
+            string memory chromosome = tokens[_tokenId].seed % 2 == 1 ? "XX" : "XY" ;
+            string memory image = IGen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].color, chromosome, tokens[_tokenId].mutated);
+            tokens[_tokenId].image = image;
+        }else if(tokens[_tokenId].mutated == true){
+            string memory image = IGen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].color, tokens[_tokenId].chromosome, tokens[_tokenId].mutated);
+            tokens[_tokenId].image = image;
+        }else{
+            string[5] memory color = IGen3_Attributes(gen3_AttributesContract).getColor(tokens[_tokenId].seed);
+            tokens[_tokenId].color = color;
+            string memory elemental = IGen3_Attributes(gen3_AttributesContract).getElemental(tokens[_tokenId].seed);
+            tokens[_tokenId].elemental = elemental;
+            string memory chromosome = IGen3_Attributes(gen3_AttributesContract).getChromosome(tokens[_tokenId].seed);
+            tokens[_tokenId].chromosome = chromosome;
+            string memory image = IGen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].color, tokens[_tokenId].chromosome, tokens[_tokenId].mutated );
+            tokens[_tokenId].image = image;
+        }
     }
 
-    function customColorForUnknown(uint _tokenId, string memory _color1, string memory _color2, string memory _color3, string memory _color4, string memory _color5) public {
+    function customColorForUnknown(uint _tokenId, string[5] memory _colors) public {
         require(balanceOf(msg.sender,_tokenId) == 1, "You aren't the owner!");
-        string memory _elemental = Gen3_Attributes(gen3_AttributesContract).getElemental(tokens[_tokenId].seed);
+        string memory _elemental = IGen3_Attributes(gen3_AttributesContract).getElemental(tokens[_tokenId].seed);
         require(keccak256(abi.encodePacked(_elemental)) == keccak256((abi.encodePacked("unknown"))), "Only Unknown TrashPandaz can be customized");
-        string[5] memory color;
-        color[0] = string(abi.encodePacked('"',_color1,'"'));
-        color[1] = string(abi.encodePacked('"',_color2,'"'));
-        color[2] = string(abi.encodePacked('"',_color3,'"'));
-        color[3] = string(abi.encodePacked('"',_color4,'"'));
-        color[4] = string(abi.encodePacked('"',_color5,'"'));
-        tokens[_tokenId].color = color;
-        string memory chromosome = Gen3_Attributes(gen3_AttributesContract).getChromosome(tokens[_tokenId].seed);
-        tokens[_tokenId].image = Gen3_Image(gen3_ImageContract).getImageCustom(chromosome, color);
+        tokens[_tokenId].color = _colors;
+        string memory image = IGen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].color, tokens[_tokenId].chromosome, tokens[_tokenId].mutated );
+        tokens[_tokenId].image = image;
     }
 
-    function mint(address _minter) public onlyRole(MINTER_ROLE){
+    function mutate(uint _tokenId, string[5] memory _colors) public onlyRole(MUTATE_ROLE){
+        require(tokens[_tokenId].mutated==false,"This NFT has already has mutated DNA.");
+        require(balanceOf(msg.sender,_tokenId) == 1, "You aren't the owner!");
+        tokens[_tokenId].color = _colors;
+        tokens[_tokenId].mutated=true;
+        if(tokens[_tokenId].hatched == true){
+            tokens[_tokenId].image = IGen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].color, tokens[_tokenId].chromosome, tokens[_tokenId].mutated );
+        }
+    }
+
+    function mint(address _minter) external onlyRole(MINTER_ROLE){
         _tokenIds.increment();
         uint256 _newItemId = _tokenIds.current();
         mintStats(_newItemId);
@@ -168,9 +208,10 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
             birthday: block.timestamp,
             hatched: false,
             color: ["???","???","???","???","???"],
-            chromosome: "",
-            elemental: "",
-            seed: uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _newItemId)))
+            chromosome: "???",
+            elemental: "???",
+            seed: uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _newItemId))),
+            mutated: false
         });
         tokens[_newItemId] = newToken;
         // create egg image
@@ -188,11 +229,11 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
 
     function mintStatsCollab(uint _newItemId, string memory _projectName, string[5] memory _colors) private {
         string[5] memory _colorsArray;
-        _colorsArray[0] = string(abi.encodePacked('"',_colors[0],'"'));
-        _colorsArray[1] = string(abi.encodePacked('"',_colors[1],'"'));
-        _colorsArray[2] = string(abi.encodePacked('"',_colors[2],'"'));
-        _colorsArray[3] = string(abi.encodePacked('"',_colors[3],'"'));
-        _colorsArray[4] = string(abi.encodePacked('"',_colors[4],'"'));
+        _colorsArray[0] = _colors[0];
+        _colorsArray[1] = _colors[1];
+        _colorsArray[2] = _colors[2];
+        _colorsArray[3] = _colors[3];
+        _colorsArray[4] = _colors[4];
         Token memory newToken = Token({
             image: string(abi.encodePacked("ipfs://",imageURI,"/","collab_collab.svg")),
             elemental: "collab",
@@ -200,7 +241,8 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
             birthday: block.timestamp,
             hatched: false,
             color: _colorsArray,
-            seed: uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _newItemId)))
+            seed: uint(keccak256(abi.encodePacked(block.timestamp, msg.sender, _newItemId))),
+            mutated: false
         });
         tokens[_newItemId] = newToken;
     }
@@ -235,15 +277,26 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         return _tokens;
     }
 
-    function setGen3_ImageContract(address _gen3_ImageContract) public onlyRole(DEFAULT_ADMIN_ROLE){
+    function getTokenImagesOfOwner(address _address) public view returns(string[] memory){
+        uint[] memory _tokens = getTokensOfOwner(_address);
+        string[] memory _images = new string[](_tokens.length);
+        for(uint i=0; i<_tokens.length;i++){
+            _images[i] = tokens[_tokens[i]].image;
+        }
+        return _images;
+    }
+
+    function setIGen3_ImageContract(address _gen3_ImageContract) public onlyRole(DEFAULT_ADMIN_ROLE){
         gen3_ImageContract = _gen3_ImageContract;
+    }
+
+    function setIGen3_AttributesContract(address _gen3_AttributesContract) public onlyRole(DEFAULT_ADMIN_ROLE){
+        gen3_AttributesContract = _gen3_AttributesContract;
     }
 
     function setDescription(string memory _description) public onlyRole(DEFAULT_ADMIN_ROLE){
         description = _description;
     }
-
-
 
     // The following functions are overrides required by Solidity.
 

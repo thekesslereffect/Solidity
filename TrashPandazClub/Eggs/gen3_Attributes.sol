@@ -3,32 +3,24 @@ pragma solidity ^0.8.18;
 
 contract gen3_Attributes{
 
-    function getAttributes(uint _seed, string[] memory _color) public view returns(string memory){
+    function getExtraAttributes(uint _seed) external view returns(string memory){
         return string(
                 abi.encodePacked(
-                    '{"trait_type": "Elemental", "value": "',
-                    getElemental(_seed),
-                    '"},{"trait_type": "Chromosome", "value": "',
-                    getChromosome(_seed),
-                    '"},{"trait_type": "Color 1", "value": "',
-                    _color[0],
-                    '"},{"trait_type": "Color 2", "value": "',
-                    _color[1],
-                    '"},{"trait_type": "Color 3", "value": "',
-                    _color[2],
-                    '"},{"trait_type": "Color 4", "value": "',
-                    _color[3],
-                    '"},{"trait_type": "Color 5", "value": "',
-                    _color[4],
-                    // Add other attributes: Levels, Colors, etc.
-                    '"}'
+                    
+                    "" // remove this and add extra attributes like Levels etc.
+                    
+                    // Example
+                    // ',{"trait_type": "Level", "value": "',
+                    // "1",
+                    // '"}'
+                    
                 )
             );
     }
 
     // CHROMOSOMES
 
-    function getChromosome(uint _seed) public pure returns(string memory chromosome){
+    function getChromosome(uint _seed) external view returns(string memory chromosome){
         chromosome = (_seed % 2) == 1 ? "XX" : "XY";
     }
 
@@ -36,7 +28,7 @@ contract gen3_Attributes{
 
     string[][] elementals = [["water", "normal", "grass", "rock", "ground"],["bug", "fire","poison", "fighting","flying"],["dragon", "ice", "psychic", "ghost", "electric"],["unknown","unknown","unknown","unknown","unknown"]];
 
-    function getElemental(uint _seed) public view returns(string memory){
+    function getElemental(uint _seed) external view returns(string memory){
         string memory elemental;
         string[] memory common = elementals[0];
         string[] memory rare = elementals[1];
@@ -55,38 +47,38 @@ contract gen3_Attributes{
 
     // COLORS
 
-    string[][][] elementalsColors = [[
+    string[5][5][4] elementalsColors = [[
         // Common
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"']
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"]
         ],[
         // rare
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"']
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"]
         ],[
         // legendary
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"'],
-        ['"#232428"','"#335056"','"#5a8a8f"','"#9dbe9f"','"#f7f0e9"']
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"],
+        ["#232428","#335056","#5a8a8f","#9dbe9f","#f7f0e9"]
         ],[
         // unknown
-        ['"#222222"','"#444444"','"#888888"','"#aaaaaa"','"#f7f0e9"'],
-        ['"#222222"','"#444444"','"#888888"','"#aaaaaa"','"#f7f0e9"'],
-        ['"#222222"','"#444444"','"#888888"','"#aaaaaa"','"#f7f0e9"'],
-        ['"#222222"','"#444444"','"#888888"','"#aaaaaa"','"#f7f0e9"'],
-        ['"#222222"','"#444444"','"#888888"','"#aaaaaa"','"#f7f0e9"']
+        ["#222222","#444444","#888888","#aaaaaa","#f7f0e9"],
+        ["#222222","#444444","#888888","#aaaaaa","#f7f0e9"],
+        ["#222222","#444444","#888888","#aaaaaa","#f7f0e9"],
+        ["#222222","#444444","#888888","#aaaaaa","#f7f0e9"],
+        ["#222222","#444444","#888888","#aaaaaa","#f7f0e9"]
         ]];
 
-    function getColor(uint _seed) public view returns(string[] memory color){
-        string memory elemental = getElemental(_seed);
+    function getColor(uint _seed) external view returns(string[5] memory color){
+        string memory elemental = this.getElemental(_seed);
         for(uint i=0; i<elementals.length;i++){
             for(uint j=0; j<elementals[i].length; j++){
                 if(keccak256(abi.encodePacked(elemental)) == keccak256(abi.encodePacked(elementals[i][j]))){

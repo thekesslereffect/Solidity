@@ -1,21 +1,11 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.18;
-
-// contract gen3_Controller{
-//     // controlls minting of gen3 Token contract as well as anything 
-//     // else related to updating the token so we can upgrade later
-//     // make this pausable so users can't accidentally use an old controller
-// }
-
-
 // SPDX-License-Identifier: MIT LICENSE
 pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Gen3_Token{
-    function mint(address _sender) public{}
+interface IGen3_Token{
+    function mint(address _sender) external;
 }
 
 contract Gen3_Controller is AccessControl{
@@ -66,14 +56,14 @@ contract Gen3_Controller is AccessControl{
     }
 
     function mint(address _minter) private returns(bool){
-        Gen3_Token(gen3_tokenContract).mint(_minter);
+        IGen3_Token(gen3_tokenContract).mint(_minter);
         return true;
     }
 
 
     // Setter functions
     // Set gen3 contract
-    function setGen3_TokenContract(address _gen3_tokenContract) public onlyRole(DEFAULT_ADMIN_ROLE){
+    function setIGen3_TokenContract(address _gen3_tokenContract) public onlyRole(DEFAULT_ADMIN_ROLE){
         gen3_tokenContract = _gen3_tokenContract;
     }
     // Set + Remove token

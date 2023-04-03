@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 interface IGen3_Colors{
-    function getColor(string memory _elemental) external view returns(string[4][5] memory);
+    function getColor(string memory _elemental) external view returns(string[4][4] memory);
 }
 
 contract gen3_Attributes{
@@ -55,10 +55,10 @@ contract gen3_Attributes{
 
     // COLORS
 
-    function getColor(uint _seed) external view returns(string[5] memory){
+    function getColor(uint _seed) external view returns(string[4] memory){
         string memory elemental = this.getElemental(_seed);
-        string[4][5] memory color = IGen3_Colors(gen3_ColorsContract).getColor(elemental);
-        string[5] memory result;
+        string[4][4] memory color = IGen3_Colors(gen3_ColorsContract).getColor(elemental);
+        string[4] memory result;
 
         for (uint256 i = 0; i < 5; i++) {
             uint256 randomIndex = uint256(keccak256(abi.encode(_seed, i))) % color[i].length;

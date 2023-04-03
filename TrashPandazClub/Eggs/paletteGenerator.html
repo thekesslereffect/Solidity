@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Color Palette Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    input[type="color"] {
+      margin: 20px;
+    }
+
+    .color-container {
+      display: flex;
+    }
+
+    .color-box {
+      width: 100px;
+      height: 100px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Color Palette Generator</h1>
+  <input type="color" id="base-color" value="#A2DFF0">
+  <div class="color-container" id="color-container">
+    <!-- Color boxes will be generated here -->
+  </div>
+
+  <script>
+    function generateComplementaryColors(baseColor) {
+      // This is a simple example of generating complementary colors.
+      // You can replace this function with a more advanced algorithm.
+      let colors = [];
+      for (let i = 1; i <= 4; i++) {
+        let color = baseColor.slice(1).split('').map((char, idx) => {
+          let newVal = parseInt(char, 16) + i;
+          newVal = newVal > 15 ? 15 : newVal;
+          return idx % 2 === 0 ? newVal.toString(16) : char;
+        }).join('');
+        colors.push('#' + color);
+      }
+      return colors;
+    }
+
+    function createColorBoxes(colors) {
+      const container = document.getElementById('color-container');
+      container.innerHTML = '';
+
+      colors.forEach(color => {
+        const box = document.createElement('div');
+        box.className = 'color-box';
+        box.style.backgroundColor = color;
+        box.title = color;
+        box.addEventListener('click', () => {
+          navigator.clipboard.writeText(color);
+          alert('Copied ' + color + ' to clipboard');
+        });
+        container.appendChild(box);
+      });
+    }
+
+    document.getElementById('base-color').addEventListener('input', (e) => {
+      const baseColor = e.target.value;
+      const complementaryColors = generateComplementaryColors(baseColor);
+      createColorBoxes([baseColor, ...complementaryColors]);
+    });
+
+    // Initialize with the default color
+    const initialColor = document.getElementById('base-color').value;
+    const initialComplementaryColors = generateComplementaryColors(initialColor);
+    createColorBoxes([initialColor, ...initialComplementaryColors]);
+  </script>
+</body>
+</html>

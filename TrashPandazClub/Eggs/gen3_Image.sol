@@ -3,20 +3,20 @@ pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/utils/Base64.sol";
 
 library TPCGen3_Image1 {
-    function generateCharacter(string memory _color1, string memory _color2, string memory _color3, string memory _color4, string memory _color5 ) public pure returns(string memory){
+    function generateCharacter(string memory _color1, string memory _color3, string memory _color4, string memory _color5 ) public pure returns(string memory){
         // stack too deep so we need to split this bitch up
         string memory result = "";
         {
             result = string(abi.encodePacked(
                 '<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com" shape-rendering="crispEdges">',
-                '<rect x="8" y="0" width="8" height="8" fill="',_color2,'"/>',
+                '<rect x="8" y="0" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="16" y="0" width="16" height="8" fill="',_color4,'"/>',
-                '<rect x="32" y="0" width="64" height="8" fill="',_color2,'"/>',
+                '<rect x="32" y="0" width="64" height="8" fill="',_color1,'"/>',
                 '<rect x="96" y="0" width="16" height="8" fill="',_color4,'"/>',
-                '<rect x="112" y="0" width="8" height="8" fill="',_color2,'"/>',
-                '<rect x="0" y="8" width="8" height="8" fill="',_color2,'"/>',
+                '<rect x="112" y="0" width="8" height="8" fill="',_color1,'"/>',
+                '<rect x="0" y="8" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="8" y="8" width="8" height="8" fill="',_color4,'"/>',
-                '<rect x="16" y="8" width="8" height="8" fill="',_color2,'"/>',
+                '<rect x="16" y="8" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="24" y="8" width="8" height="8" fill="',_color3,'"/>',
                 '<rect x="32" y="8" width="16" height="8" fill="',_color4,'"/>'
                 
@@ -28,9 +28,9 @@ library TPCGen3_Image1 {
                 '<rect x="48" y="8" width="32" height="8" fill="',_color3,'"/>',
                 '<rect x="80" y="8" width="16" height="8" fill="',_color4,'"/>',
                 '<rect x="96" y="8" width="8" height="8" fill="',_color3,'"/>',
-                '<rect x="104" y="8" width="8" height="8" fill="',_color2,'"/>',
+                '<rect x="104" y="8" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="112" y="8" width="8" height="8" fill="',_color4,'"/>',
-                '<rect x="120" y="8" width="8" height="8" fill="',_color2,'"/>',
+                '<rect x="120" y="8" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="0" y="16" width="8" height="8" fill="',_color3,'"/>',
                 '<rect x="8" y="16" width="8" height="8" fill="',_color4,'"/>',
                 '<rect x="16" y="16" width="8" height="8" fill="',_color3,'"/>',
@@ -59,7 +59,7 @@ library TPCGen3_Image1 {
                 '<rect x="88" y="24" width="8" height="8" fill="',_color5,'"/>',
                 '<rect x="96" y="24" width="24" height="8" fill="',_color4,'"/>',
                 '<rect x="120" y="24" width="8" height="8" fill="',_color3,'"/>',
-                '<rect x="0" y="32" width="8" height="8" fill="',_color2,'"/>',
+                '<rect x="0" y="32" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="8" y="32" width="32" height="8" fill="',_color4,'"/>',
                 '<rect x="40" y="32" width="8" height="8" fill="',_color5,'"/>',
                 '<rect x="48" y="32" width="8" height="8" fill="',_color4,'"/>'
@@ -74,8 +74,8 @@ library TPCGen3_Image1 {
                 '<rect x="72" y="32" width="8" height="8" fill="',_color4,'"/>',
                 '<rect x="80" y="32" width="8" height="8" fill="',_color5,'"/>',
                 '<rect x="88" y="32" width="32" height="8" fill="',_color4,'"/>',
-                '<rect x="120" y="32" width="8" height="8" fill="',_color2,'"/>',
-                '<rect x="0" y="40" width="8" height="8" fill="',_color2,'"/>',
+                '<rect x="120" y="32" width="8" height="8" fill="',_color1,'"/>',
+                '<rect x="0" y="40" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="8" y="40" width="16" height="8" fill="',_color4,'"/>',
                 '<rect x="24" y="40" width="32" height="8" fill="',_color5,'"/>',
                 '<rect x="56" y="40" width="16" height="8" fill="',_color3,'"/>',
@@ -87,7 +87,7 @@ library TPCGen3_Image1 {
             result = string(abi.encodePacked(
                 result,
                 '<rect x="104" y="40" width="16" height="8" fill="',_color4,'"/>',
-                '<rect x="120" y="40" width="8" height="8" fill="',_color2,'"/>',
+                '<rect x="120" y="40" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="0" y="48" width="16" height="8" fill="',_color4,'"/>',
                 '<rect x="16" y="48" width="8" height="8" fill="',_color5,'"/>'
                 '<rect x="24" y="48" width="8" height="8" fill="',_color3,'"/>',
@@ -142,7 +142,7 @@ library TPCGen3_Image1 {
 }
 
 library TPCGen3_Image2 {
-    function generateCharacter(string memory _result, string memory _color1, string memory _color2, string memory _color3, string memory _color4, string memory _color5, string memory _chromosome ) public pure returns(string memory){
+    function generateCharacter(string memory _result, string memory _color1, string memory _color3, string memory _color4, string memory _color5, string memory _chromosome ) public pure returns(string memory){
         if (keccak256(abi.encodePacked(_chromosome)) == keccak256(abi.encodePacked("XX")) ){
             _chromosome = _color1;
         }else{
@@ -227,7 +227,7 @@ library TPCGen3_Image2 {
                 result,
                 '<rect x="0" y="88" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="8" y="88" width="8" height="8" fill="',_color4,'"/>',
-                '<rect x="16" y="88" width="16" height="8" fill="',_color2,'"/>',
+                '<rect x="16" y="88" width="16" height="8" fill="',_color1,'"/>',
                 '<rect x="32" y="88" width="8" height="8" fill="',_color4,'"/>',
                 '<rect x="40" y="88" width="8" height="8" fill="',_color5,'"/>',
                 '<rect x="48" y="88" width="8" height="8" fill="',_color4,'"/>',
@@ -241,7 +241,7 @@ library TPCGen3_Image2 {
         {
             result = string(abi.encodePacked(
                 result,
-                '<rect x="96" y="88" width="16" height="8" fill="',_color2,'"/>',
+                '<rect x="96" y="88" width="16" height="8" fill="',_color1,'"/>',
                 '<rect x="112" y="88" width="8" height="8" fill="',_color4,'"/>',
                 '<rect x="120" y="88" width="8" height="8" fill="',_color1,'"/>',
                 '<rect x="0" y="96" width="8" height="8" fill="',_color1,'"/>',
@@ -303,9 +303,9 @@ library TPCGen3_Image2 {
 
 contract gen3_Image{
 
-    function getImage(string[5] memory _color, string memory _chromosome, bool _mutated) external view returns(string memory) {
-        string memory _result = TPCGen3_Image1.generateCharacter(_color[0],_color[1],_color[2],_color[3],_color[4]);
-        _result = TPCGen3_Image2.generateCharacter(_result, _color[0],_color[1],_color[2],_color[3],_color[4],_chromosome);
+    function getImage(string[4] memory _color, string memory _chromosome, bool _mutated) external view returns(string memory) {
+        string memory _result = TPCGen3_Image1.generateCharacter(_color[0],_color[1],_color[2],_color[3]);
+        _result = TPCGen3_Image2.generateCharacter(_result, _color[0],_color[1],_color[2],_color[3],_chromosome);
         return _result;
     }
 

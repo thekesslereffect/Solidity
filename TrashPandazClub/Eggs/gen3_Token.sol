@@ -93,7 +93,7 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
 
     function _tokenURIPayload(uint256 _tokenId) private view returns (string memory) {
         if (tokens[_tokenId].hatched == false) {
-            string memory _rarity = (tokens[_tokenId].seed % 100) < 50 ? "common" : (tokens[_tokenId].seed % 100) < 75 ? "rare" : "legendary";
+            string memory _rarity = (uint256(keccak256(abi.encode(tokens[_tokenId].seed))) % 100) < 50 ? "common" : (uint256(keccak256(abi.encode(tokens[_tokenId].seed))) % 100) < 75 ? "rare" : "legendary";
             return string(
                 abi.encodePacked(
                     '"attributes": [{"trait_type": "Incubation","max_value": 100, "value": ',
@@ -157,8 +157,8 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         require(balanceOf(msg.sender,_tokenId) == 1, "You aren't the owner!");
         require(tokens[_tokenId].hatched==false, "That one is hatched already...");
         tokens[_tokenId].hatched = true;
-        if(keccak256(abi.encodePacked(tokens[_tokenId].elemental)) == keccak256(abi.encodePacked("collab"))){
-            string memory chromosome = tokens[_tokenId].seed % 2 == 1 ? "XX" : "XY" ;
+        if(keccak256(abi.encode(tokens[_tokenId].elemental)) == keccak256(abi.encode("collab"))){
+            string memory chromosome = uint256(keccak256(abi.encode(tokens[_tokenId].seed))) % 2 == 1 ? "XX" : "XY" ;
             string memory image = IGen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].color, chromosome, tokens[_tokenId].mutated);
             tokens[_tokenId].image = image;
         }else if(tokens[_tokenId].mutated == true){
@@ -179,7 +179,7 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
     function customColorForUnknown(uint _tokenId, string[5] memory _colors) public {
         require(balanceOf(msg.sender,_tokenId) == 1, "You aren't the owner!");
         string memory _elemental = IGen3_Attributes(gen3_AttributesContract).getElemental(tokens[_tokenId].seed);
-        require(keccak256(abi.encodePacked(_elemental)) == keccak256((abi.encodePacked("unknown"))), "Only Unknown TrashPandaz can be customized");
+        require(keccak256(abi.encode(_elemental)) == keccak256((abi.encode("unknown"))), "Only Unknown TrashPandaz can be customized");
         tokens[_tokenId].color = _colors;
         string memory image = IGen3_Image(gen3_ImageContract).getImage(tokens[_tokenId].color, tokens[_tokenId].chromosome, tokens[_tokenId].mutated );
         tokens[_tokenId].image = image;
@@ -214,8 +214,8 @@ contract Gen3_Token is ERC1155URIStorage, AccessControl{
         });
         tokens[_newItemId] = newToken;
         // create egg image
-        string memory _rarity = (tokens[_newItemId].seed % 100) < 50 ? "common" : (tokens[_newItemId].seed % 100) < 75 ? "rare" : "legendary";
-        string memory _color = imageColors[tokens[_newItemId].seed % imageColors.length];
+        string memory _rarity = (uint256(keccak256(abi.encode(tokens[_newItemId].seed))) % 100) < 50 ? "common" : (uint256(keccak256(abi.encode(tokens[_newItemId].seed))) % 100) < 75 ? "rare" : "legendary";
+        string memory _color = imageColors[uint256(keccak256(abi.encode(tokens[_newItemId].seed))) % imageColors.length];
         tokens[_newItemId].image = string(abi.encodePacked("ipfs://",imageURI,"/",_rarity,"_",_color));
     }
 

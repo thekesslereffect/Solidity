@@ -310,9 +310,3 @@ contract gen3_Image{
     }
 
 }
-
-
-
-
-
-    

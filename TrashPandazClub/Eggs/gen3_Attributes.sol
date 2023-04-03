@@ -74,4 +74,3 @@ contract gen3_Attributes{
         gen3_ColorsContract = _gen3_ColorsContract;
     }
 }
-

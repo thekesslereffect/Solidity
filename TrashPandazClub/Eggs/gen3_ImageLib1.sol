@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 library gen3_ImageLib1 {
-    function generateCharacter(string memory _color1, string memory _color3, string memory _color4, string memory _color5 ) public pure returns(string memory){
+    function generateCharacter(string memory _color1, string memory _color3, string memory _color4, string memory _color5 ) external pure returns(string memory){
         // stack too deep so we need to split this bitch up
         string memory result = "";
         {

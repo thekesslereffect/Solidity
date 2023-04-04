@@ -5,8 +5,8 @@ async function main() {
 
 // Verify the contract after deploying
 await hre.run("verify:verify", {
-address: "0xFB50134484a3ff9Bde23648835C9AC0a22b1c1e5",
-constructorArguments: ['0x1aAA180d4C82aa7EAcEa1FAe8B09BbB8174Cbbf0','0x24C82E859540FA03aE4681e03aC5aFCc4F7f70fE',18],
+address: "0x09D9F6CbB4E2981449361738a214D5E07226637D",
+constructorArguments: ['0xe5c52C7B1ED7fa75aceB898a09f0508D26eC0533'],
 });
 }
 // Call the main function and catch if there is any error

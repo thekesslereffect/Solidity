@@ -46,7 +46,7 @@ contract Gen3Token is ERC1155URIStorage{
     mapping(uint256 => Token) public tokens;
     
     uint private incubationTime;
-    address private controller;
+    mapping (address => bool) controller;
     address private owner;
 
     constructor(address _gen3ImageContract, address _gen3AttributesContract) ERC1155("")  {
@@ -54,19 +54,20 @@ contract Gen3Token is ERC1155URIStorage{
         gen3ImageContract = _gen3ImageContract;
         gen3AttributesContract = _gen3AttributesContract;
         owner = msg.sender;
+        controller(msg.sender) = true;
         imageURI = "QmX2SiSVtSWLemBcpQLi4iUWAkhq3XZ39RstX3zr8inFGB";
         imageColors = ["brown.svg","red.svg","green.svg","pink.svg","orange.svg","black.svg","yellow.svg","blue.svg","purple.svg"];
     }
 
     function _onlyController() private view { 
-        require(msg.sender == controller);
+        require(controller(msg.sender) == true);
     }
     modifier onlyController(){
         _onlyController();
         _;
     }
-    function setController(address _controller) public onlyOwner{
-        controller = _controller;
+    function setController(address _controller, bool _enable) public onlyOwner{
+        controller(_controller) = _enable;
     }
     function _onlyOwner() private view{
         require(msg.sender == owner);

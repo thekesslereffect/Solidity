@@ -39,7 +39,7 @@ contract Gen3_Controller is AccessControl{
         enableMutation = false;
         enableHatching = true;
         enableMintWithTrash = true;
-        enableMintWithMatic = false;
+        enableMintWithMatic = true;
     }
 
     // MINT

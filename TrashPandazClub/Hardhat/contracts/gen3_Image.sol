@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/utils/Base64.sol";
 
-library TPCGen3_Image1 {
+library gen3_ImageLib1 {
     function generateCharacter(string memory _color1, string memory _color3, string memory _color4, string memory _color5 ) public pure returns(string memory){
         // stack too deep so we need to split this bitch up
         string memory result = "";
@@ -141,7 +141,7 @@ library TPCGen3_Image1 {
     }
 }
 
-library TPCGen3_Image2 {
+library gen3_ImageLib2 {
     function generateCharacter(string memory _result, string memory _color1, string memory _color3, string memory _color4, string memory _color5, string memory _chromosome ) public pure returns(string memory){
         if (keccak256(abi.encodePacked(_chromosome)) == keccak256(abi.encodePacked("XX")) ){
             _chromosome = _color1;
@@ -304,8 +304,8 @@ library TPCGen3_Image2 {
 contract gen3_Image{
 
     function getImage(string[4] memory _color, string memory _chromosome, bool _mutated) external view returns(string memory) {
-        string memory _result = TPCGen3_Image1.generateCharacter(_color[0],_color[1],_color[2],_color[3]);
-        _result = TPCGen3_Image2.generateCharacter(_result, _color[0],_color[1],_color[2],_color[3],_chromosome);
+        string memory _result = gen3_ImageLib1.generateCharacter(_color[0],_color[1],_color[2],_color[3]);
+        _result = gen3_ImageLib2.generateCharacter(_result, _color[0],_color[1],_color[2],_color[3],_chromosome);
         return _result;
     }
 

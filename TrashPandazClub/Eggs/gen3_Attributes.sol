@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 interface IGen3_Colors{
     function getColor(string memory _elemental) external view returns(string[4][4] memory);
+    function getMutationColor() external view returns(string[4][4][15] memory);
 }
 
-contract gen3_Attributes{
+contract gen3_Attributes is AccessControl{
     address public gen3_ColorsContract;
-    address owner;
+    string[][] elementals;
+
     constructor(address _gen3_ColorsContract){
         gen3_ColorsContract = _gen3_ColorsContract;
-        owner = msg.sender;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        elementals = [["water","normal","grass","rock","ground"],["bug","fire","poison","fighting","flying"],["dragon","ice","psychic","ghost","electric"],["unknown","unknown","unknown","unknown","unknown"]];
     }
 
     function getExtraAttributes(uint _seed) external view returns(string memory){
@@ -34,8 +38,6 @@ contract gen3_Attributes{
 
     // ELEMENTALS
 
-    string[][] elementals = [["water","normal","grass","rock","ground"],["bug","fire","poison","fighting","flying"],["dragon","ice","psychic","ghost","electric"],["unknown","unknown","unknown","unknown","unknown"]];
-
     function getElemental(uint _seed) external view returns(string memory){
         string memory elemental;
         string[] memory common = elementals[0];
@@ -43,9 +45,9 @@ contract gen3_Attributes{
         string[] memory legendary = elementals[2];
         if ((uint256(keccak256(abi.encode(_seed))) % 100) < 50) {
             elemental = common[uint256(keccak256(abi.encode(_seed))) % common.length];
-        } else if ((uint256(keccak256(abi.encode(_seed))) % 100) < 75) {
+        } else if ((uint256(keccak256(abi.encode(_seed))) % 100) < 80) {
             elemental = rare[uint256(keccak256(abi.encode(_seed))) % rare.length];
-        } else if ((uint256(keccak256(abi.encode(_seed))) % 100) < 90) {
+        } else if ((uint256(keccak256(abi.encode(_seed))) % 100) < 95) {
             elemental = legendary[uint256(keccak256(abi.encode(_seed))) % legendary.length];
         } else {
             elemental = "unknown";
@@ -60,7 +62,7 @@ contract gen3_Attributes{
         string[4][4] memory color = IGen3_Colors(gen3_ColorsContract).getColor(elemental);
         string[4] memory result;
 
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 4; i++) {
             uint256 randomIndex = uint256(keccak256(abi.encode(_seed, i))) % color[i].length;
             result[i] = color[i][randomIndex];
         }
@@ -68,9 +70,25 @@ contract gen3_Attributes{
         return result;
     }
     
+    function getMutationColor(uint _seed) external view returns(string[4] memory){
+        string memory elemental = this.getElemental(_seed);
+        string[4][4][15] memory color = IGen3_Colors(gen3_ColorsContract).getMutationColor();
+        string[4] memory result;
 
-    function setGen3_ColorsContract(address _gen3_ColorsContract) public {
-        require(msg.sender == owner, "Only the owner can update this");
+        for (uint256 i = 0; i < 4; i++) {
+            uint256 randomElementalIndex = uint256(keccak256(abi.encode(_seed, i))) % color[i].length;
+            uint256 randomIndex = uint256(keccak256(abi.encode(_seed, i))) % color[i][i].length;
+            result[i] = color[randomElementalIndex][i][randomIndex];
+        }
+
+        return result;
+    }
+
+    function setGen3_ColorsContract(address _gen3_ColorsContract) public onlyRole(DEFAULT_ADMIN_ROLE){
         gen3_ColorsContract = _gen3_ColorsContract;
+    }
+
+    function setElementals(string[][] memory _elementals) public onlyRole(DEFAULT_ADMIN_ROLE){
+        elementals = _elementals;
     }
 }

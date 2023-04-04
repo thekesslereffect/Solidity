@@ -144,6 +144,12 @@ contract Gen3_Colors{
         }
     }
 
+    function getMutationColor() external view returns(string[4][4][15] memory){
+        string[4][4][15] memory mutationColor;
+        mutationColor = [water(),normal(),grass(),rock(),ground(),bug(),fire(),poison(),fighting(),flying(),dragon(),ice(),psychic(),ghost(),electric()];
+        return mutationColor;
+    }
+
     function water() public view returns(string[4][4] memory){
         return cWater;
     }

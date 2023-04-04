@@ -27,7 +27,7 @@ contract Gen3Token is ERC1155URIStorage{
 
     string public name = "TrashPandazClub Gen3";
     string public symbol = "TPCGEN3";
-    string public imageURI;
+    string private imageURI;
     string[] private imageColors;
 
     address gen3ImageContract;
@@ -45,9 +45,9 @@ contract Gen3Token is ERC1155URIStorage{
     }
     mapping(uint256 => Token) public tokens;
     
-    uint public incubationTime;
-    address controller;
-    address owner;
+    uint private incubationTime;
+    address private controller;
+    address private owner;
 
     constructor(address _gen3ImageContract, address _gen3AttributesContract) ERC1155("")  {
         incubationTime = 5 days;

@@ -2,12 +2,12 @@
 pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-interface IGen3_Image{
+interface IGen3Image{
     function getColor(string memory _elemental) external view returns(string[4][4] memory);
     function getMutationColor() external view returns(string[4][4][15] memory);
 }
 
-contract gen3_Attributes is AccessControl{
+contract Gen3Attributes is AccessControl{
     address public gen3_ImageContract;
     string[][] elementals;
 
@@ -59,7 +59,7 @@ contract gen3_Attributes is AccessControl{
 
     function getColor(uint _seed) external view returns(string[4] memory){
         string memory elemental = this.getElemental(_seed);
-        string[4][4] memory color = IGen3_Image(gen3_ImageContract).getColor(elemental);
+        string[4][4] memory color = IGen3Image(gen3_ImageContract).getColor(elemental);
         string[4] memory result;
 
         for (uint256 i = 0; i < 4; i++) {
@@ -72,7 +72,7 @@ contract gen3_Attributes is AccessControl{
     
     function getMutationColor(uint _seed) external view returns(string[4] memory){
         string memory elemental = this.getElemental(_seed);
-        string[4][4][15] memory color = IGen3_Image(gen3_ImageContract).getMutationColor();
+        string[4][4][15] memory color = IGen3Image(gen3_ImageContract).getMutationColor();
         string[4] memory result;
 
         for (uint256 i = 0; i < 4; i++) {

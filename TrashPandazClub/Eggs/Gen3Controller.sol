@@ -4,7 +4,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-interface IGen3_Token{
+interface IGen3Token{
     function mint(address _address) external;
     function hatch(address _address, uint _tokenId) external;
     function mutate(address _address, uint _tokenId) external;
@@ -12,7 +12,7 @@ interface IGen3_Token{
     function customColorForUnknown(address _address, uint _tokenId, string[4] memory _colors) external;
 }
 
-contract Gen3_Controller is AccessControl{
+contract Gen3Controller is AccessControl{
     using SafeERC20 for ERC20;
 
     address public erc20Token;
@@ -73,19 +73,19 @@ contract Gen3_Controller is AccessControl{
     }
 
     function admin_MintCollab(address _address, string memory _projectName, string[4] memory _colors) public onlyRole(DEFAULT_ADMIN_ROLE) returns(bool){
-        IGen3_Token(gen3_tokenContract).mintCollab(_address, _projectName, _colors);
+        IGen3Token(gen3_tokenContract).mintCollab(_address, _projectName, _colors);
         return true;
     }
 
     function mint(address _address) private{
-        IGen3_Token(gen3_tokenContract).mint(_address);
+        IGen3Token(gen3_tokenContract).mint(_address);
     }
 
     // HATCH
 
     function hatch(uint _tokenId) public returns(bool){
         require(enableHatching == true,"Hatching is paused at the moment. Check back later.");
-        IGen3_Token(gen3_tokenContract).hatch(msg.sender, _tokenId);
+        IGen3Token(gen3_tokenContract).hatch(msg.sender, _tokenId);
         return true;
     }
     
@@ -94,20 +94,20 @@ contract Gen3_Controller is AccessControl{
         if(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) == false){
             require(enableMutation == true,"Mutations are disabled.");
         }
-        IGen3_Token(gen3_tokenContract).mutate(msg.sender, _tokenId);
+        IGen3Token(gen3_tokenContract).mutate(msg.sender, _tokenId);
         return true;
     }
 
     // Custom Unknown Color
     function customColorForUnknown(uint _tokenId, string[4] memory _colors) public returns(bool){
-        IGen3_Token(gen3_tokenContract).customColorForUnknown(msg.sender, _tokenId, _colors);
+        IGen3Token(gen3_tokenContract).customColorForUnknown(msg.sender, _tokenId, _colors);
         return true;
     }
 
     // ADMIN FUNCTIONS
     
     // Set gen3 contract
-    function setIGen3_TokenContract(address _gen3_tokenContract) public onlyRole(DEFAULT_ADMIN_ROLE){
+    function setIGen3TokenContract(address _gen3_tokenContract) public onlyRole(DEFAULT_ADMIN_ROLE){
         gen3_tokenContract = _gen3_tokenContract;
     }
     // Set + Remove token

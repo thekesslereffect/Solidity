@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/utils/Base64.sol";
 
-library gen3_ImageLib2 {
+library Gen3ImageLib2 {
     function generateCharacter(string memory _result, string memory _color1, string memory _color3, string memory _color4, string memory _color5, string memory _chromosome ) external pure returns(string memory){
         if (keccak256(abi.encodePacked(_chromosome)) == keccak256(abi.encodePacked("XX")) ){
             _chromosome = _color1;

@@ -2,19 +2,19 @@
 pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/utils/Base64.sol";
 
-interface gen3_ImageLib1 {
+interface IGen3ImageLib1 {
     function generateCharacter(string memory _color1, string memory _color3, string memory _color4, string memory _color5 ) external pure returns(string memory);
 }
-interface gen3_ImageLib2 {
+interface IGen3ImageLib2 {
     function generateCharacter(string memory _result, string memory _color1, string memory _color3, string memory _color4, string memory _color5, string memory _chromosome ) external pure returns(string memory);
 }
-contract gen3_Image{
-    gen3_ImageLib1 public lib1;
-    gen3_ImageLib2 public lib2;
+contract Gen3Image{
+    IGen3ImageLib1 public lib1;
+    IGen3ImageLib2 public lib2;
 
     constructor(address _lib1, address _lib2){
-        lib1 = gen3_ImageLib1(_lib1);
-        lib2 = gen3_ImageLib2(_lib2);
+        lib1 = IGen3ImageLib1(_lib1);
+        lib2 = IGen3ImageLib2(_lib2);
     }
 
     function getImage(string[4] memory _color, string memory _chromosome, bool _mutated) external view returns(string memory) {

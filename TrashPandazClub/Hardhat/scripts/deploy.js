@@ -36,8 +36,8 @@ async function main() {
   // await contractLib2.deployed();
   // console.log("Library2 Deployed Succesfully! : ", contractLib2.address); 
 
-  const gen3 = await hre.ethers.getContractFactory("Gen3Token");
-  const contract = await gen3.deploy('0xe5c52C7B1ED7fa75aceB898a09f0508D26eC0533','0x09D9F6CbB4E2981449361738a214D5E07226637D',{gasPrice: _gas}); 
+  const gen3 = await hre.ethers.getContractFactory("Gen3Controller");
+  const contract = await gen3.deploy('0x75CfC337076a1CF907a00a0D60B21bC6e2c4FD1c','0x24C82E859540FA03aE4681e03aC5aFCc4F7f70fE',{gasPrice: _gas}); 
   await contract.deployed();
   console.log("Contract Deployed Succesfully! : ", contract.address); 
 

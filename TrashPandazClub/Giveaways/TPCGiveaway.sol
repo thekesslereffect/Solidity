@@ -19,8 +19,6 @@ contract TPCGiveaway {
     bool public entryFeeEnabled;
     bool public creatorFeeEnabled;
 
-    address[] public participants;
-
     struct Giveaway{
         address creator;
         uint entryFee;
@@ -74,17 +72,18 @@ contract TPCGiveaway {
 
     // Functions ........................................
 
-    function createGiveaway(uint _entryFee, string memory _prize, uint _numberOfWinners, uint _duration) public blacklisted whitelisted{
-        if(creatorFeeEnabled){
-            require(ERC20(erc20Token).allowance(msg.sender, address(this)) >= (creatorFee*10**18), "Insufficient allowance");
-            require(ERC20(erc20Token).balanceOf(msg.sender) >= (creatorFee*10**18), "You dont have enough tokens to create a giveaway.");
-            ERC20(erc20Token).safeTransferFrom(msg.sender, address(this), (creatorFee*10**18));
+    function createGiveaway(uint _entryFee, string memory _prize, uint _numberOfWinners, uint _duration) public blacklisted whitelisted {
+        uint feeToPay = creatorFee * 10**18;
+        if(creatorFeeEnabled) {
+            require(ERC20(erc20Token).allowance(msg.sender, address(this)) >= feeToPay, "Insufficient allowance");
+            require(ERC20(erc20Token).balanceOf(msg.sender) >= feeToPay, "You don't have enough tokens to create a giveaway.");
+            ERC20(erc20Token).safeTransferFrom(msg.sender, address(this), feeToPay);
         }
         giveawayIds.increment();
         uint _giveawayId = giveawayIds.current();
-        Giveaway storage newGiveaway = giveaways[_giveawayId] ;
+        Giveaway storage newGiveaway = giveaways[_giveawayId];
         newGiveaway.creator = msg.sender;
-        if(entryFeeEnabled){
+        if(entryFeeEnabled) {
             newGiveaway.entryFee = _entryFee;
         }
         newGiveaway.prize = _prize;
@@ -93,12 +92,12 @@ contract TPCGiveaway {
         newGiveaway.duration = _duration;
         emit GiveawayCreated(
             _giveawayId, 
-            giveaways[_giveawayId].creator, 
-            giveaways[_giveawayId].entryFee,
-            giveaways[_giveawayId].prize, 
-            giveaways[_giveawayId].numberOfWinners, 
-            giveaways[_giveawayId].startTime, 
-            giveaways[_giveawayId].duration
+            newGiveaway.creator, 
+            newGiveaway.entryFee,
+            newGiveaway.prize, 
+            newGiveaway.numberOfWinners, 
+            newGiveaway.startTime, 
+            newGiveaway.duration
         );
     }
 
@@ -190,6 +189,11 @@ contract TPCGiveaway {
         return _participants;
     }
 
+    function viewNumberOfParticipants(uint _giveawayId) public view returns(uint){
+        uint _participants = giveaways[_giveawayId].participants.length;
+        return _participants;
+    }
+
     // ADMIN ........................................................
 
     function destroyGiveaway(uint _giveawayId, bool _bool) public adminRole{
@@ -208,9 +212,11 @@ contract TPCGiveaway {
     function setERC20Token(address _erc20Token) public adminRole{
         erc20Token = _erc20Token;
     }
+    
     function removeTokens(address _recipient, uint256 _tokenAmount) public adminRole{
         ERC20(erc20Token).safeTransfer(_recipient, _tokenAmount);
     }
+
     function removeMatic(address payable _recipient) public adminRole{
         _recipient.transfer(address(this).balance);
     }
@@ -227,7 +233,7 @@ contract TPCGiveaway {
 
     function addWhitelist(address[] memory _address, bool _bool) public adminRole{
         for(uint i=0;i<_address.length;i++){
-            blacklist[_address[i]] = _bool;
+            whitelist[_address[i]] = _bool;
         }
     }
 

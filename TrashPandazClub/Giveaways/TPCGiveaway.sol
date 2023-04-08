@@ -3,10 +3,8 @@ pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-// import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 
 contract TPCGiveaway is AccessControl{
     using Counters for Counters.Counter;
@@ -14,10 +12,13 @@ contract TPCGiveaway is AccessControl{
     using SafeERC20 for ERC20;
     address public erc20Token;
 
-    mapping (address => bool) admin;
+    mapping(address => bool) admin;
     mapping(address => bool) public blacklist;
+    mapping(address => bool) public whitelist;
+    bool public whitelistEnabled;
 
-    uint public giveawayCreatorFee;
+    uint public creatorFee;
+    uint public creatorRoyalty;
 
     struct Giveaway{
         address creator;
@@ -30,15 +31,15 @@ contract TPCGiveaway is AccessControl{
         mapping(address => bool) entered;
         mapping(address => bool) won;
         address[] winners;
-        bool destroyed;
+        bool ended;
     }
     mapping(uint => Giveaway) public giveaways;
-    mapping(uint => bool) public giveawayEnded;
 
-    constructor(address _erc20Token, uint _giveawayCreatorFee){
+    constructor(address _erc20Token, uint _creatorFee, uint _creatorRoyalty){
         erc20Token = _erc20Token;
         admin[msg.sender] = true;
-        giveawayCreatorFee = _giveawayCreatorFee;
+        creatorFee = _creatorFee;
+        creatorRoyalty = _creatorRoyalty;
     }
 
     // Modifiers .........................................
@@ -53,14 +54,24 @@ contract TPCGiveaway is AccessControl{
         _;
     }
 
+    modifier whitelisted{
+        if(whitelistEnabled){
+            require(whitelist[msg.sender]==true,"You are not whitelisted to create giveaways.");
+        }
+        _;
+    }
+
     // Events ...........................................
 
     event WinnersPicked(uint giveawayId, address[] winners);
     event GiveawayCreated(uint giveawayId,address creator,uint ticketPrice, bytes prize, uint numberOfWinners,uint startTime, uint duration);
-    event NewParticipant();
+    event NewParticipant(uint giveawayaId, address participant);
     // Functions ........................................
 
-    function createGiveaway(uint _ticketPrice, bytes memory _prize, uint _numberOfWinners, uint _duration) public blacklisted{
+    function createGiveaway(uint _ticketPrice, bytes memory _prize, uint _numberOfWinners, uint _duration) public blacklisted whitelisted{
+        require(ERC20(erc20Token).allowance(msg.sender, address(this)) >= (creatorFee*10**18), "Insufficient allowance");
+        require(ERC20(erc20Token).balanceOf(msg.sender) >= (creatorFee*10**18), "You dont have enough tokens to create a giveaway.");
+        ERC20(erc20Token).safeTransferFrom(msg.sender, address(this), (creatorFee*10**18));
         giveawayIds.increment();
         uint _giveawayId = giveawayIds.current();
         Giveaway storage newGiveaway = giveaways[_giveawayId] ;
@@ -79,26 +90,28 @@ contract TPCGiveaway is AccessControl{
             giveaways[_giveawayId].startTime, 
             giveaways[_giveawayId].duration
         );
+
     }
 
-    function enterGiveaway(uint _giveawayId) public {
+    function enterGiveaway(uint _giveawayId) public blacklisted{
         // make sure they have enough tokens to enter
         require(ERC20(erc20Token).allowance(msg.sender, address(this)) >= (giveaways[_giveawayId].ticketPrice*10**18), "Insufficient allowance");
         require(ERC20(erc20Token).balanceOf(msg.sender) >= (giveaways[_giveawayId].ticketPrice*10**18), "You dont have enough tokens to enter.");
         require(giveaways[_giveawayId].entered[msg.sender] == false,"You already entered this giveaway.");
-        require(giveaways[_giveawayId].startTime+giveaways[_giveawayId].duration >= block.timestamp, "This giveaway is already over.");
-        require(giveaways[_giveawayId].destroyed == false, "This giveaway has been destroyed. Sorry.");
-        
+        require(giveaways[_giveawayId].startTime+giveaways[_giveawayId].duration >= block.timestamp, "This giveaway has ended. Sorry.");
+        require(giveaways[_giveawayId].ended == false, "This giveaway has ended. Sorry.");
+        ERC20(erc20Token).safeTransferFrom(msg.sender, address(this), (giveaways[_giveawayId].ticketPrice*10**18));
         giveaways[_giveawayId].participants.push(msg.sender);
         giveaways[_giveawayId].entered[msg.sender] = true;
-
-        ERC20(erc20Token).safeTransferFrom(msg.sender, address(this), (giveaways[_giveawayId].ticketPrice*10**18));
     }
 
-    function pickWinners(uint _giveawayId, uint _seed) public {
-        require(giveaways[_giveawayId].creator == msg.sender, "Only the giveaway creator can pick winners!");
-        require(giveaways[_giveawayId].participants.length > 0, "There were no participants. Sorry.");
-        require(giveaways[_giveawayId].startTime+giveaways[_giveawayId].duration <= block.timestamp, "This giveaway is still running.");
+    function endGiveaway(uint _giveawayId, uint _seed) public blacklisted whitelisted{
+        if(admin[msg.sender]==false){
+            require(giveaways[_giveawayId].creator == msg.sender, "Only the giveaway creator can pick winners!");
+            require(giveaways[_giveawayId].participants.length > 0, "There were no participants. Sorry.");
+            require(giveaways[_giveawayId].startTime + giveaways[_giveawayId].duration <= block.timestamp, "This giveaway is still running.");
+        }
+        require(giveaways[_giveawayId].ended == false, "This giveaway already ended");
 
         // In case number of winners allowed exceedsd the participants
         if(giveaways[_giveawayId].numberOfWinners>=giveaways[_giveawayId].participants.length){
@@ -119,7 +132,8 @@ contract TPCGiveaway is AccessControl{
             giveaways[_giveawayId].winners = _winners;
             emit WinnersPicked(_giveawayId, giveaways[_giveawayId].winners);
         }
-        giveawayEnded[_giveawayId] = true;
+        transferRoyalties(_giveawayId);
+        giveaways[_giveawayId].ended = true;
     }
 
     function isIndexUsed(uint256[] memory usedIndexes, uint256 randomIndex) internal pure returns (bool) {
@@ -131,10 +145,25 @@ contract TPCGiveaway is AccessControl{
         return false;
     }
 
+    function transferRoyalties(uint _giveawayId) private {
+        uint _royalty = giveaways[_giveawayId].ticketPrice * giveaways[_giveawayId].participants.length * 10 ** 18 * creatorRoyalty / 100;
+        if(_royalty > 0){
+            ERC20(erc20Token).safeTransferFrom(address(this),giveaways[_giveawayId].creator, _royalty);
+        }
+    }
+
     // ADMIN
 
     function destroyGiveaway(uint _giveawayId, bool _bool) public adminRole{
-        giveaways[_giveawayId].destroyed = _bool;
+        giveaways[_giveawayId].ended = _bool;
+    }
+
+    function setCreatorFee(uint _creatorFee) public adminRole{
+        creatorFee = _creatorFee;
+    }
+
+    function setCreatorRoyalty(uint _creatorRoyalty) public adminRole{
+        creatorRoyalty = _creatorRoyalty;
     }
 
     // Set + Remove token
@@ -148,12 +177,24 @@ contract TPCGiveaway is AccessControl{
         _recipient.transfer(address(this).balance);
     }
 
-    function setAdmin(address _address, bool _bool) public adminRole{
+    function addAdmin(address _address, bool _bool) public adminRole{
         admin[_address] = _bool;
     }
 
-    function setBlacklist(address _address, bool _bool) public adminRole{
-        blacklist[_address] = _bool;
+    function addBlacklist(address[] memory _address, bool _bool) public adminRole{
+        for(uint i=0;i<_address.length;i++){
+            blacklist[_address[i]] = _bool;
+        }
+    }
+
+    function addWhitelist(address[] memory _address, bool _bool) public adminRole{
+        for(uint i=0;i<_address.length;i++){
+            blacklist[_address[i]] = _bool;
+        }
+    }
+
+    function setEnableWhitelist(bool _bool) public adminRole{
+        whitelistEnabled = _bool;
     }
 
 }

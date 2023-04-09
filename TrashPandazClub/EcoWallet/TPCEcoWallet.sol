@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract TPCEcoWallet {
     using SafeERC20 for IERC20;
@@ -44,10 +45,6 @@ contract TPCEcoWallet {
 
     // User Functions ........................................
 
-    function approveExternalERC20Token( uint256 _amount) public {
-        erc20Token.approve(address(this), _amount);
-    }
-
     function depositERC20BALANCE(uint _amount) public {
         require(
             erc20Token.allowance(msg.sender, address(this)) >= _amount &&
@@ -69,9 +66,8 @@ contract TPCEcoWallet {
         virtualContractERC20Balance -= _amount;
     }
 
-    function depositMATICBALANCE(uint _amount) public payable {
-        require(msg.value == _amount, "Sent value does not match the specified amount.");
-        require(msg.sender.balance >= _amount,"Insufficient balance ");
+    function depositMATICBALANCE() public payable {
+        uint _amount = msg.value;
         MATICBALANCE[msg.sender] += _amount;
         emit MATICBalanceDeposited(msg.sender,_amount);
         virtualContractMATICBalance += _amount;
@@ -80,8 +76,7 @@ contract TPCEcoWallet {
     function withdrawMATICBALANCE(uint _amount) public {
         uint _bal = MATICBALANCE[msg.sender];
         require(_bal >= _amount, "Insufficient balance for that amount.");
-        address payable recipient = payable(msg.sender);
-        recipient.transfer(_amount);
+        payable(msg.sender).transfer(_amount);
         MATICBALANCE[msg.sender] = _bal - _amount;
         emit MATICBalanceWithdrawn(msg.sender,_amount);
         virtualContractMATICBalance -= _amount;

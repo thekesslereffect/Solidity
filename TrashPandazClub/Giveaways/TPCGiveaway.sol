@@ -2,23 +2,26 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract TPCGiveaway {
+interface ITPCEcoWallet{
+    function addERC20Balance(address _account, uint _amount) external;
+    function removeERC20Balance(address _account, uint _amount) external;
+    function viewERC20BALANCE(address _account) external view returns(uint);
+    function viewMATICBALANCE(address _account) external view returns(uint);
+}
+
+contract TPCGiveaway_Text {
     using Counters for Counters.Counter;
     Counters.Counter private giveawayIds;
-    using SafeERC20 for IERC20;
-    IERC20 public erc20Token;
+    address public ITPCEcoWalletContract;
     mapping(address => bool) admin;
     mapping(address => bool) public blacklist;
     mapping(address => bool) public whitelist;
     bool public whitelistEnabled;
     uint public creatorFee;
-    uint public creatorRoyaltyPercent;
+    uint public developerFee;
     bool public entryFeeEnabled;
     bool public creatorFeeEnabled;
-    mapping(address=>uint) public creatorRoyalties;
 
     struct Giveaway {
         address creator;
@@ -30,14 +33,15 @@ contract TPCGiveaway {
         address[] participants;
         mapping(address => uint) enteredIndex;
         address[] winners;
+        uint escrow;
     }
     mapping(uint => Giveaway) public giveaways;
 
-    constructor(IERC20 _erc20Token){
-        erc20Token = _erc20Token;
+    constructor(address _ITPCEcoWalletContract){
+        ITPCEcoWalletContract = _ITPCEcoWalletContract;
         admin[msg.sender] = true;
-        creatorFee = 1000; // erc20*10**18
-        creatorRoyaltyPercent = 80; // %
+        creatorFee = 100000000000000000000; // 100 Tokens
+        developerFee = 1; // %
         creatorFeeEnabled = false;
         entryFeeEnabled = false;
     }
@@ -71,7 +75,6 @@ contract TPCGiveaway {
     event WinnersPicked(uint giveawayId, address[] winners);
     event GiveawayCreated(uint giveawayId,address creator,uint entryFee, string prize, uint numberOfWinners,uint startTime, uint duration);
     event NewParticipant(uint giveawayaId, address participant);
-    event RoyaltyWithdrawn(address indexed creator, uint256 amount);
     event GiveawayDestroyed(uint giveawayId);
 
     // Functions ........................................
@@ -81,19 +84,10 @@ contract TPCGiveaway {
     // Emits a GiveawayCreated event
     function createGiveaway(uint _entryFee, string memory _prize, uint _numberOfWinners, uint _duration) public blacklisted whitelisted {
         if(creatorFeeEnabled) {
-            uint feeToPay = creatorFee * 10**18;
-            uint royalties = creatorRoyalties[msg.sender];
-            if (royalties >= feeToPay) {
-                royalties -= feeToPay;
-                creatorRoyalties[msg.sender] = royalties;
-            }else{
-                require(
-                    IERC20(erc20Token).allowance(msg.sender, address(this)) >= feeToPay &&
-                    IERC20(erc20Token).balanceOf(msg.sender) >= feeToPay,
-                    "Insufficient balance or allowance to enter."
-                );
-                IERC20(erc20Token).safeTransferFrom(msg.sender, address(this), feeToPay);
-            }
+            uint feeToPay = creatorFee;
+            uint erc20Balance = ITPCEcoWallet(ITPCEcoWalletContract).viewERC20BALANCE(msg.sender);
+            require(erc20Balance >= feeToPay, "You dont have enough tokens in your balance.");
+            ITPCEcoWallet(ITPCEcoWalletContract).removeERC20Balance(msg.sender,feeToPay);
         }
         giveawayIds.increment();
         uint _giveawayId = giveawayIds.current();
@@ -126,13 +120,10 @@ contract TPCGiveaway {
         require(giveaways[_giveawayId].startTime+giveaways[_giveawayId].duration >= block.timestamp, "This giveaway has ended. Sorry.");
         require(giveaways[_giveawayId].winners.length == 0, "This giveaway has ended. Sorry.");
         if(giveaways[_giveawayId].entryFee>0){
-            require(
-                IERC20(erc20Token).allowance(msg.sender, address(this)) >= giveaways[_giveawayId].entryFee*10**18 &&
-                IERC20(erc20Token).balanceOf(msg.sender) >= giveaways[_giveawayId].entryFee*10**18,
-                "Insufficient balance or allowance to enter."
-            );
-            IERC20(erc20Token).safeTransferFrom(msg.sender, address(this), giveaways[_giveawayId].entryFee*10**18);
-            creatorRoyalties[giveaways[_giveawayId].creator] += giveaways[_giveawayId].entryFee *10**18 * creatorRoyaltyPercent / 100;
+            uint erc20Balance = ITPCEcoWallet(ITPCEcoWalletContract).viewERC20BALANCE(msg.sender);
+            require(erc20Balance >= giveaways[_giveawayId].entryFee, "You dont have enough tokens in your balance.");
+            ITPCEcoWallet(ITPCEcoWalletContract).removeERC20Balance(msg.sender,giveaways[_giveawayId].entryFee);
+            giveaways[_giveawayId].escrow += giveaways[_giveawayId].entryFee;
         }
         giveaways[_giveawayId].enteredIndex[msg.sender] = giveaways[_giveawayId].participants.length;
         giveaways[_giveawayId].participants.push(msg.sender);
@@ -160,8 +151,11 @@ contract TPCGiveaway {
                 _winners[i] = giveaways[_giveawayId].participants[_randomIndex];
             }
             giveaways[_giveawayId].winners = _winners;
-            emit WinnersPicked(_giveawayId, _winners);
+            emit WinnersPicked(_giveawayId, _winners); 
         }
+        // Release Escrow minus fee
+        uint _escrow = giveaways[_giveawayId].escrow * ( 100 - developerFee ) / 100;
+        ITPCEcoWallet(ITPCEcoWalletContract).addERC20Balance(giveaways[_giveawayId].creator, _escrow);
     }
 
     // Checks if a given index is present in the usedIndexes array
@@ -172,16 +166,6 @@ contract TPCGiveaway {
             }
         }
         return false;
-    }
-
-    // Allows a creator to withdraw their earned royalties
-    // Emits a RoyaltyWithdrawn event
-    function withdrawRoyalties() public {
-        uint royalties = creatorRoyalties[msg.sender];
-        require(royalties > 0, "No royalties to withdraw.");
-        IERC20(erc20Token).safeTransfer(msg.sender, royalties);
-        creatorRoyalties[msg.sender] = 0;
-        emit RoyaltyWithdrawn(msg.sender, royalties);
     }
 
     // View ........................................................
@@ -220,13 +204,18 @@ contract TPCGiveaway {
 
     // Allows an admin to destroy a giveaway by setting its duration to 0 and winners to an empty array
     // Emits a GiveawayDestroyed event
-    function destroyGiveaways(uint[] memory _giveawayId) public adminRole{
-        for(uint i=0;i<_giveawayId.length;i++){
-            giveaways[_giveawayId[i]].duration = 0;
-            address[] memory emptyWinners;
-            giveaways[_giveawayId[i]].winners = emptyWinners;
-            emit GiveawayDestroyed(_giveawayId[i]);
+    function destroyGiveaway(uint _giveawayId) public adminRole{
+        // RESET AND RETURN ALL FUNDS TO USERS
+        uint entryFee = giveaways[_giveawayId].entryFee;
+        address[] memory participants = giveaways[_giveawayId].participants;
+        // Loop through the participants and return their entry fees
+        for (uint i = 0; i < participants.length; i++) {
+            ITPCEcoWallet(ITPCEcoWalletContract).addERC20Balance(participants[i], entryFee);
         }
+        giveaways[_giveawayId].duration = 0;
+        address[] memory emptyWinners;
+        giveaways[_giveawayId].winners = emptyWinners;
+        emit GiveawayDestroyed(_giveawayId);
     }
 
     // Allows an admin to update the creator fee
@@ -235,18 +224,8 @@ contract TPCGiveaway {
     }
 
     // Allows an admin to update the creator royalty percentage
-    function setCreatorRoyaltyPercent(uint _creatorRoyaltyPercent) public adminRole{
-        creatorRoyaltyPercent = _creatorRoyaltyPercent;
-    }
-
-    // Allows an admin to set a new ERC20 token as the currency for giveaways
-    function setERC20Token(IERC20 _erc20Token) public adminRole{
-        erc20Token = _erc20Token;
-    }
-    
-    // Allows an admin to remove tokens from the contract
-    function removeTokens(address _recipient,IERC20 _token, uint _tokenAmount) public adminRole{
-        IERC20(_token).safeTransfer(_recipient, _tokenAmount);
+    function setDeveloperFee(uint _developerFee) public adminRole{
+        developerFee = _developerFee;
     }
 
     // Allows an admin to remove Matic/Polygon from the contract
@@ -286,6 +265,10 @@ contract TPCGiveaway {
     // Allows an admin to enable or disable the entryFee feature
     function setEntryFeeEnabled(bool _bool) public adminRole{
         entryFeeEnabled = _bool;
+    }
+
+    function setITPCEcoWalletContract(address _ITPCEcoWalletContract) public adminRole{
+        ITPCEcoWalletContract = _ITPCEcoWalletContract;
     }
 
 }

@@ -3,6 +3,8 @@ pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v4.3/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 interface ITPCEcoWallet{
     function addERC20Balance(address _account, uint _amount) external;
@@ -11,12 +13,11 @@ interface ITPCEcoWallet{
     function viewMATICBALANCE(address _account) external view returns(uint);
 }
 
-contract TPCGiveaway_Text {
+contract TPCGiveaway_Text is ReentrancyGuard, AccessControl{
     using Counters for Counters.Counter;
     Counters.Counter private giveawayIds;
     IERC721 public erc721Token;
     address public ITPCEcoWalletContract;
-    mapping(address => bool) admin;
     mapping(address => bool) public blacklist;
     mapping(address => bool) public whitelist;
     bool public whitelistEnabled;
@@ -34,7 +35,7 @@ contract TPCGiveaway_Text {
         uint startTime;
         uint duration;
         address[] participants;
-        mapping(address => uint) enteredIndex;
+        mapping(address => bool) hasEntered;
         address[] winners;
         uint escrow;
     }
@@ -43,20 +44,16 @@ contract TPCGiveaway_Text {
     constructor(address _ITPCEcoWalletContract, IERC721 _erc721Token){
         erc721Token = _erc721Token; // Require Holders can only create giveaways
         ITPCEcoWalletContract = _ITPCEcoWalletContract;
-        admin[msg.sender] = true;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         creatorFee = 100000000000000000000; // 100 Tokens
         developerFee = 1; // %
         creatorFeeEnabled = false;
         entryFeeEnabled = false;
-        erc721TokenEnabled = true;
+        erc721TokenEnabled = false;
     }
 
     // Modifiers .........................................
 
-    modifier adminRole{
-        require(admin[msg.sender]==true,"Nice Try Guy");
-        _;
-    }
     modifier blacklisted{
         require(blacklist[msg.sender]==false,"You have been blacklisted. Don't come back here.");
         _;
@@ -90,7 +87,7 @@ contract TPCGiveaway_Text {
     // Creates a new giveaway with the provided parameters and stores it in the giveaways mapping
     // Deducts the creator fee from the creator's royalties if they have enough, otherwise transfers it from the creator's balance
     // Emits a GiveawayCreated event
-    function createGiveaway(uint _entryFee, string memory _prize, uint _numberOfWinners, uint _duration) public blacklisted whitelisted ownsERC721Token{
+    function createGiveaway(uint _entryFee, string memory _prize, uint _numberOfWinners, uint _duration) public blacklisted whitelisted ownsERC721Token nonReentrant{
         if(creatorFeeEnabled) {
             uint feeToPay = creatorFee;
             uint erc20Balance = ITPCEcoWallet(ITPCEcoWalletContract).viewERC20BALANCE(msg.sender);
@@ -122,9 +119,9 @@ contract TPCGiveaway_Text {
     // Allows a user to enter a giveaway by providing its ID
     // Transfers the required entry fee from the participant's balance and updates the creator's royalties
     // Emits a NewParticipant event
-    function enterGiveaway(uint _giveawayId) public blacklisted{
+    function enterGiveaway(uint _giveawayId) public blacklisted nonReentrant{
         require(giveaways[_giveawayId].creator != msg.sender, "You cant enter your own giveaway.");
-        require(giveaways[_giveawayId].enteredIndex[msg.sender] == 0, "You already entered this giveaway.");
+        require(!giveaways[_giveawayId].hasEntered[msg.sender], "You already entered this giveaway.");
         require(giveaways[_giveawayId].startTime+giveaways[_giveawayId].duration >= block.timestamp, "This giveaway has ended. Sorry.");
         require(giveaways[_giveawayId].winners.length == 0, "This giveaway has ended. Sorry.");
         if(giveaways[_giveawayId].entryFee>0){
@@ -133,14 +130,14 @@ contract TPCGiveaway_Text {
             ITPCEcoWallet(ITPCEcoWalletContract).removeERC20Balance(msg.sender,giveaways[_giveawayId].entryFee);
             giveaways[_giveawayId].escrow += giveaways[_giveawayId].entryFee;
         }
-        giveaways[_giveawayId].enteredIndex[msg.sender] = giveaways[_giveawayId].participants.length;
+        giveaways[_giveawayId].hasEntered[msg.sender] = true;
         giveaways[_giveawayId].participants.push(msg.sender);
         emit NewParticipant(_giveawayId,msg.sender);
     }
 
     // Ends a giveaway by picking winners and updating the winners array in the giveaway struct
     // Emits a WinnersPicked event
-    function endGiveaway(uint _giveawayId, uint _seed) public blacklisted whitelisted onlyCreator(_giveawayId){
+    function endGiveaway(uint _giveawayId, uint _seed) public blacklisted whitelisted onlyCreator(_giveawayId) nonReentrant{
         require(giveaways[_giveawayId].startTime + giveaways[_giveawayId].duration <= block.timestamp, "This giveaway is still running.");
         require(giveaways[_giveawayId].participants.length > 0, "There were no participants. Sorry.");
         require(giveaways[_giveawayId].winners.length == 0, "This giveaway has ended. Sorry.");
@@ -212,7 +209,7 @@ contract TPCGiveaway_Text {
 
     // Allows an admin to destroy a giveaway by setting its duration to 0 and winners to an empty array
     // Emits a GiveawayDestroyed event
-    function destroyGiveaway(uint _giveawayId) public adminRole{
+    function destroyGiveaway(uint _giveawayId) public onlyRole(DEFAULT_ADMIN_ROLE){
         // RESET AND RETURN ALL FUNDS TO USERS
         uint entryFee = giveaways[_giveawayId].entryFee;
         address[] memory participants = giveaways[_giveawayId].participants;
@@ -227,64 +224,59 @@ contract TPCGiveaway_Text {
     }
 
     // Allows an admin to update the creator fee
-    function setCreatorFee(uint _creatorFee) public adminRole{
+    function setCreatorFee(uint _creatorFee) public onlyRole(DEFAULT_ADMIN_ROLE){
         creatorFee = _creatorFee;
     }
 
     // Allows an admin to update the creator royalty percentage
-    function setDeveloperFee(uint _developerFee) public adminRole{
+    function setDeveloperFee(uint _developerFee) public onlyRole(DEFAULT_ADMIN_ROLE){
         developerFee = _developerFee;
     }
 
     // Allows an admin to remove Matic/Polygon from the contract
-    function removeMatic(address payable _recipient) public adminRole{
+    function removeMatic(address payable _recipient) public onlyRole(DEFAULT_ADMIN_ROLE){
         _recipient.transfer(address(this).balance);
     }
 
-    // Allows an admin to add or remove an admin
-    function addAdmin(address _address, bool _bool) public adminRole{
-        admin[_address] = _bool;
-    }
-
     // Allows an admin to add or remove addresses from the blacklist
-    function addBlacklist(address[] memory _address, bool _bool) public adminRole{
+    function addBlacklist(address[] memory _address, bool _bool) public onlyRole(DEFAULT_ADMIN_ROLE){
         for(uint i=0;i<_address.length;i++){
             blacklist[_address[i]] = _bool;
         }
     }
 
     // Allows an admin to add or remove addresses from the whitelist
-    function addWhitelist(address[] memory _address, bool _bool) public adminRole{
+    function addWhitelist(address[] memory _address, bool _bool) public onlyRole(DEFAULT_ADMIN_ROLE){
         for(uint i=0;i<_address.length;i++){
             whitelist[_address[i]] = _bool;
         }
     }
 
     // Allows an admin to enable or disable the whitelist feature
-    function setWhitelistEnabled(bool _bool) public adminRole{
+    function setWhitelistEnabled(bool _bool) public onlyRole(DEFAULT_ADMIN_ROLE){
         whitelistEnabled = _bool;
     }
 
     // Allows an admin to enable or disable the creatorFee feature
-    function setCreatorFeeEnabled(bool _bool) public adminRole{
+    function setCreatorFeeEnabled(bool _bool) public onlyRole(DEFAULT_ADMIN_ROLE){
         creatorFeeEnabled = _bool;
     }
 
     // Allows an admin to enable or disable the entryFee feature
-    function setEntryFeeEnabled(bool _bool) public adminRole{
+    function setEntryFeeEnabled(bool _bool) public onlyRole(DEFAULT_ADMIN_ROLE){
         entryFeeEnabled = _bool;
     }
 
-    function setITPCEcoWalletContract(address _ITPCEcoWalletContract) public adminRole{
+    function setITPCEcoWalletContract(address _ITPCEcoWalletContract) public onlyRole(DEFAULT_ADMIN_ROLE){
         ITPCEcoWalletContract = _ITPCEcoWalletContract;
     }
 
-    function setERC721Token(IERC721 _erc721Token) public adminRole {
+    function setERC721Token(IERC721 _erc721Token) public onlyRole(DEFAULT_ADMIN_ROLE) {
         require(address(_erc721Token) != address(0), "Invalid ERC721 token");
         erc721Token = _erc721Token;
     }
 
-    function setErc721TokenEnabled(bool _bool) public adminRole{
+    function setErc721TokenEnabled(bool _bool) public onlyRole(DEFAULT_ADMIN_ROLE){
         erc721TokenEnabled = _bool;
     }
 

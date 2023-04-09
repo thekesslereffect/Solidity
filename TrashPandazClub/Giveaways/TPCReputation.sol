@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract TPCReputation {
+contract TPCReputation is AccessControl {
     struct Account {
         uint upvotes;
         mapping(address=>uint) lastUpvote;
@@ -11,19 +12,11 @@ contract TPCReputation {
     address[] private accountList;
     uint private decayRate; // Decay rate in seconds
     uint private sameAddressCooldown;
-    mapping(address => bool) admin;
     
     constructor(){
-        admin[msg.sender] = true;
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         decayRate = 86400; // 1 day
         sameAddressCooldown = 300; // 5 minutes
-    }
-
-    // Modifiers ........................................
-
-    modifier adminRole{
-        require(admin[msg.sender]==true,"Nice Try Guy");
-        _;
     }
 
     // Events ...........................................
@@ -71,17 +64,11 @@ contract TPCReputation {
         return (allAccounts, upvotes);
     }
 
-    function setDecayRate(uint _decayRate) public adminRole{
+    function setDecayRate(uint _decayRate) public onlyRole(DEFAULT_ADMIN_ROLE){
         decayRate = _decayRate;
     }
 
-    function setSameAddressCooldown(uint _sameAddressCooldown) public adminRole{
+    function setSameAddressCooldown(uint _sameAddressCooldown) public onlyRole(DEFAULT_ADMIN_ROLE){
         sameAddressCooldown = _sameAddressCooldown;
     }
-
-    // Allows an admin to add or remove an admin
-    function addAdmin(address _address, bool _bool) public adminRole{
-        admin[_address] = _bool;
-    }
-
 }

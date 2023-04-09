@@ -2,6 +2,7 @@
 pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 interface ITPCEcoWallet{
     function addERC20Balance(address _account, uint _amount) external;
@@ -13,6 +14,7 @@ interface ITPCEcoWallet{
 contract TPCGiveaway_Text {
     using Counters for Counters.Counter;
     Counters.Counter private giveawayIds;
+    IERC721 public erc721Token;
     address public ITPCEcoWalletContract;
     mapping(address => bool) admin;
     mapping(address => bool) public blacklist;
@@ -22,6 +24,7 @@ contract TPCGiveaway_Text {
     uint public developerFee;
     bool public entryFeeEnabled;
     bool public creatorFeeEnabled;
+    bool public erc721TokenEnabled;
 
     struct Giveaway {
         address creator;
@@ -37,13 +40,15 @@ contract TPCGiveaway_Text {
     }
     mapping(uint => Giveaway) public giveaways;
 
-    constructor(address _ITPCEcoWalletContract){
+    constructor(address _ITPCEcoWalletContract, IERC721 _erc721Token){
+        erc721Token = _erc721Token; // Require Holders can only create giveaways
         ITPCEcoWalletContract = _ITPCEcoWalletContract;
         admin[msg.sender] = true;
         creatorFee = 100000000000000000000; // 100 Tokens
         developerFee = 1; // %
         creatorFeeEnabled = false;
         entryFeeEnabled = false;
+        erc721TokenEnabled = true;
     }
 
     // Modifiers .........................................
@@ -52,21 +57,24 @@ contract TPCGiveaway_Text {
         require(admin[msg.sender]==true,"Nice Try Guy");
         _;
     }
-
     modifier blacklisted{
         require(blacklist[msg.sender]==false,"You have been blacklisted. Don't come back here.");
         _;
     }
-
     modifier whitelisted{
         if(whitelistEnabled){
             require(whitelist[msg.sender]==true,"You are not whitelisted to create giveaways.");
         }
         _;
     }
-
     modifier onlyCreator(uint _giveawayId){
         require(giveaways[_giveawayId].creator == msg.sender, "Only the giveaway creator can call this function.");
+        _;
+    }
+    modifier ownsERC721Token {
+        if(erc721TokenEnabled){
+            require(erc721Token.balanceOf(msg.sender) > 0, "Must own an ERC721 token to create a giveaway");
+        }
         _;
     }
 
@@ -82,7 +90,7 @@ contract TPCGiveaway_Text {
     // Creates a new giveaway with the provided parameters and stores it in the giveaways mapping
     // Deducts the creator fee from the creator's royalties if they have enough, otherwise transfers it from the creator's balance
     // Emits a GiveawayCreated event
-    function createGiveaway(uint _entryFee, string memory _prize, uint _numberOfWinners, uint _duration) public blacklisted whitelisted {
+    function createGiveaway(uint _entryFee, string memory _prize, uint _numberOfWinners, uint _duration) public blacklisted whitelisted ownsERC721Token{
         if(creatorFeeEnabled) {
             uint feeToPay = creatorFee;
             uint erc20Balance = ITPCEcoWallet(ITPCEcoWalletContract).viewERC20BALANCE(msg.sender);
@@ -269,6 +277,15 @@ contract TPCGiveaway_Text {
 
     function setITPCEcoWalletContract(address _ITPCEcoWalletContract) public adminRole{
         ITPCEcoWalletContract = _ITPCEcoWalletContract;
+    }
+
+    function setERC721Token(IERC721 _erc721Token) public adminRole {
+        require(address(_erc721Token) != address(0), "Invalid ERC721 token");
+        erc721Token = _erc721Token;
+    }
+
+    function setErc721TokenEnabled(bool _bool) public adminRole{
+        erc721TokenEnabled = _bool;
     }
 
 }
